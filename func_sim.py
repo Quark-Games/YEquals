@@ -99,9 +99,11 @@ coor = Coordinate()
 
 def main():
     func = file.get()
+    index = len(func)
     holding = set()
 
     while True:
+        print(index)
 
         # keyboard controls
         for event in pygame.event.get():
@@ -133,21 +135,36 @@ def main():
                     elif "shift" in holding:
                         if event.key == K_6:
                             func += '**'
+                            index += 2
                         elif event.key == K_8:
                             func += '*'
+                            index += 1
                         elif event.key == K_9:
                             func += '('
+                            index += 1
                         elif event.key == K_0:
                             func += ')'
+                            index += 1
                         elif event.key == K_EQUALS:
                             func += '+'
+                            index += 1
                     elif event.key == K_BACKSPACE:
                         if func:
-                            func = func[:-1]
+                            func = func[:index-1] + func[index:]
+                            index -= 1
+                    elif event.key == K_LEFT:
+                        if index > 0:
+                            index -= 1
+                    elif event.key == K_RIGHT:
+                        if index < len(func):
+                            index += 1
                     elif event.key == K_SPACE:
                         func += ' '
+                        index += 1
+                    # basic input
                     else:
-                        func += key_name
+                        func = func[0:index] + key_name + func[index:]
+                        index += 1
             if event.type == KEYUP:
                 # releasing the modifier keys
                 key_name = pygame.key.name(event.key)
@@ -165,8 +182,8 @@ def main():
             coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
-            coor.scalex += mouse_move[0] / -10
-            coor.scaley += mouse_move[1] / -10
+            coor.scalex *= 1 + mouse_move[0] / 100
+            coor.scaley *= 1 + mouse_move[1] / -100
         else:
             # reset mouse release position
             pygame.mouse.get_rel()
@@ -175,7 +192,8 @@ def main():
         # display
         display.fill(WHITE)
 
-        bitmap = font.render("y = " + func, True, BLACK)
+        string = "y = " + func[:index] + '|' + func[index:]
+        bitmap = font.render(string, True, BLACK)
         display.blit(bitmap, (10, 10))
 
         coor.axis()
