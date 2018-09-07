@@ -74,15 +74,8 @@ class Coordinate:
 
     def __init__(self):
         self.origin = [display_width / 2, display_height / 2]
-        self.scale = 50
-
-    def p2f(px, py):
-        fx, fy = 0, 0
-        return fx, fy
-
-    def f2p(fx, fy):
-        px, py = 0, 0
-        return px, py
+        self.scalex = 50
+        self.scaley = 50
 
     def axis(self):
         pygame.draw.line(display,
@@ -127,9 +120,13 @@ def main():
                         if event.key == K_q:
                             quit_all(func)
                         elif event.key == K_MINUS:
-                            coor.scale /= 2
+                            coor.scalex /= 2
+                            coor.scaley /= 2
                         elif event.key == K_EQUALS:
-                            coor.scale *= 2
+                            coor.scalex *= 2
+                            coor.scaley *= 2
+                        elif event.key == K_0:
+                            coor.scalex, coor.scaley = 50, 50
                         elif event.key == K_BACKSPACE:
                             func = ""
                     elif "shift" in holding:
@@ -165,8 +162,13 @@ def main():
         mouse_pos = pygame.mouse.get_pos()
         if mouse_press[0]:
             coor.chori(*pygame.mouse.get_rel())
+        elif mouse_press[2]:
+            mouse_move = pygame.mouse.get_rel()
+            coor.scalex += mouse_move[0] / -10
+            coor.scaley += mouse_move[1] / -10
         else:
-            pygame.mouse.get_rel() # reset mouse release position
+            # reset mouse release position
+            pygame.mouse.get_rel()
             focus_x = mouse_pos[0]
 
         # display
@@ -183,9 +185,9 @@ def main():
         # domain = [x / ACC for x in range(0, display_width * ACC)]
         for pixel_x in range(0, display_width):
             try:
-                x = (pixel_x - display_width / 2) / coor.scale
+                x = (pixel_x - coor.origin[0]) / coor.scalex
                 y = eval(func)
-                pixel_y = display_height / 2 - y * coor.scale
+                pixel_y = coor.origin[1] - y * coor.scaley
                 temp = 0 < old_pos[1] < display_height
                 temp = temp or 0 < pixel_y < display_height
                 if pixel_x - old_pos[0] <= 1 and temp:
@@ -199,10 +201,10 @@ def main():
 
         # display drawability message
         if not drawability:
-            bitmap = font.render("this function not drawable", True, BLACK)
+            bitmap = font.render("the function is not drawable", True, BLACK)
             display.blit(bitmap, (10, 30))
         elif drawability != display_width:
-            bitmap = font.render("this function not consistant", True, BLACK)
+            bitmap = font.render("the function is not consistant", True, BLACK)
             display.blit(bitmap, (10, 30))
 
         # show focus point location
