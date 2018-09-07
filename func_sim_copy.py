@@ -102,6 +102,8 @@ def main():
     index = len(func)
     holding = set()
 
+    pygame.key.set_repeat(300, 80)
+
     while True:
         # keyboard controls
         for event in pygame.event.get():
