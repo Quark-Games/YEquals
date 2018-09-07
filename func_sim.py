@@ -126,6 +126,7 @@ def main():
                             coor.scalex *= 2
                             coor.scaley *= 2
                         elif event.key == K_0:
+                            coor.origin = [display_width/2, display_height/2]
                             coor.scalex, coor.scaley = 50, 50
                         elif event.key == K_BACKSPACE:
                             func = ""
