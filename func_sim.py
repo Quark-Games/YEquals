@@ -5,8 +5,8 @@ import re
 
 pygame.init()
 
-display_width = 800
-display_height = 600
+display_width = 1000
+display_height = 720
 
 display = pygame.display.set_mode((display_width, display_height))
 
@@ -26,6 +26,7 @@ def main():
     func = ""
     scale = 10
     holding = set()
+    origin = [display_width / 2, display_height / 2]
 
     while True:
 
@@ -46,9 +47,11 @@ def main():
                         if event.key == K_q:
                             quit_all()
                         elif event.key == K_MINUS:
-                            scale -= 5
+                            scale *= 2
                         elif event.key == K_EQUALS:
-                            scale += 5
+                            scale /= 2
+                        elif event.key == K_BACKSPACE:
+                            func = ""
                     elif "shift" in holding:
                         if event.key == K_6:
                             func += '**'
@@ -85,27 +88,35 @@ def main():
 
         pygame.draw.line(display,
                          RED,
-                         (0, display_height / 2),
-                         (display_width, display_height / 2))
+                         (0, origin[1]),
+                         (display_width, origin[1]))
         pygame.draw.line(display,
                          RED,
-                         (display_width / 2, 0),
-                         (display_width / 2, display_height))
+                         (origin[0], 0),
+                         (origin[0], display_height))
 
         # draw graph of function
-        try:
-            old_pos = (0, 0)
-            for pixel_x in range(0, display_width):
+        old_pos = (0, 0)
+        drawability = display_width
+        for pixel_x in range(0, display_width):
+            try:
                 x = (pixel_x - display_width / 2) / scale
                 y = eval(func)
                 pixel_y = int(display_height / 2 - y * scale)
-                pygame.draw.line(display,
-                                 BLACK,
-                                 old_pos,
-                                 (pixel_x, pixel_y))
+                if pixel_x - old_pos[0] == 1 and 0 < old_pos[1] < display_height:
+                    pygame.draw.line(display,
+                                     BLACK,
+                                     old_pos,
+                                     (pixel_x, pixel_y))
                 old_pos = (pixel_x, pixel_y)
-        except:
-            bitmap = font.render("Function not drawable!", True, BLACK)
+            except:
+                drawability -= 1
+        # display drawability message
+        if not drawability:
+            bitmap = font.render("this function not drawable", True, BLACK)
+            display.blit(bitmap, (10, 30))
+        elif drawability != display_width:
+            bitmap = font.render("this function not consistant", True, BLACK)
             display.blit(bitmap, (10, 30))
 
         pygame.display.flip()
