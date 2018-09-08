@@ -38,14 +38,15 @@ class File:
     def get(self):
         try:
             with open(self.fname, 'r') as f:
-                cont = f.read()
+                cont = [s.replace('\n','') for s in f.readlines()]
             return cont
         except FileNotFoundError:
-            return ''
+            return ['']
 
     def put(self, cont):
         with open(self.fname, 'w') as f:
-            f.write(str(cont))
+            for each in cont:
+                f.write(each + '\n')
 
 
 class Message:
@@ -55,6 +56,7 @@ class Message:
         self.font = pygame.font.Font(None, 20)
 
     def put(self, screen, textString):
+        print(textString)
         textBitmap = self.font.render(textString, True, BLACK)
         screen.blit(textBitmap, [self.x, self.y])
         self.y += self.line_height
@@ -101,16 +103,47 @@ coor = Coordinate()
 class Func:
     family = []
     active = None
-    index = 0
+    _act_index = -1
 
-    def __init__(self):
+    def __init__(self, exp):
         self.exp = exp
         self.cursor = len(exp)
         Func.family.append(self)
-        Func.index = len(family) - 1
+        Func.set_act(len(Func.family) - 1)
+
+    def set_act(index):
+        if index == 'u':
+            if Func._act_index > 0:
+                Func._act_index -= 1
+            Func.active = Func.family[Func._act_index]
+        elif index == 'd':
+            if Func._act_index < len(Func.family) - 1:
+                Func._act_index += 1
+            Func.active = Func.family[Func._act_index]
+        elif Func.family:
+            Func.active = Func.family[index]
+            Func._act_index = index
+
+    def remove():
+        index = Func.family.index(Func.active)
+        Func.family.remove(Func.active)
+        Func.set_act(index - 1)
 
     def move_cursor(self, move):
-        self.move = move
+        if move == -1:
+            if self.cursor > 0:
+                self.cursor -= 1
+        elif move == 1:
+            if self.cursor < len(self.exp):
+                self.cursor += 1
+
+    def insert(self, string):
+        self.exp = self.exp[0:self.cursor] + string + self.exp[self.cursor:]
+        self.cursor += len(string)
+
+    def delete(self):
+        self.exp = self.exp[:self.cursor-1] + self.exp[self.cursor:]
+        self.cursor -= 1
 
     def draw(self):
         # draw graph of function
@@ -119,7 +152,7 @@ class Func:
         for pixel_x in range(0, display_width):
             try:
                 x = (pixel_x - coor.origin[0]) / coor.scalex
-                y = eval(self.func)
+                y = eval(self.exp)
                 pixel_y = coor.origin[1] - y * coor.scaley
                 temp = 0 < old_pos[1] < display_height
                 temp = temp or 0 < pixel_y < display_height
@@ -133,30 +166,43 @@ class Func:
                 drawability -= 1
 
         # display function expression
-        message.put("y = "+self.func[:self.cursor]+'|'+self.func[self.cursor:])
+        if Func.active == self:
+            message.put(display,
+                        "y = " + self.exp[:self.cursor] +
+                        '|' + self.exp[self.cursor:])
+        else:
+            message.put(display, "y = " + self.exp)
 
         # display drawability message
         if not drawability:
-            temp = "the function is not drawable"
+            msg = "the function is not drawable"
         elif drawability != display_width:
-            temp = "the function is not consistant"
+            msg = "the function is not consistant"
+        else:
+            msg = "the function is consistant in view"
         message.indent()
-        message.put(temp)
+        message.put(display, msg)
         message.unindent()
 
 
 def main():
-    func = file.get()
-    index = len(func)
+    functions = file.get()
     holding = set()
 
     pygame.key.set_repeat(300, 80)
 
+    for func in functions:
+        Func(func)
+
     while True:
+        # reset
+        message.reset()
+        func = Func.active
+
         # keyboard controls
         for event in pygame.event.get():
             if event.type == QUIT:
-                quit_all(func)
+                quit_all(Func.family)
             if event.type == KEYDOWN:
                 # holding down the modifier keys
                 key_name = pygame.key.name(event.key)
@@ -168,7 +214,7 @@ def main():
                     # special operations
                     if "meta" in holding:
                         if event.key == K_q:
-                            quit_all(func)
+                            quit_all(Func.family)
                         elif event.key == K_MINUS:
                             coor.scalex /= 2
                             coor.scaley /= 2
@@ -178,41 +224,42 @@ def main():
                         elif event.key == K_0:
                             coor.origin = [display_width/2, display_height/2]
                             coor.scalex, coor.scaley = 50, 50
+                        elif event.key == K_9:
+                            ave = (coor.scalex + coor.scaley) / 2
+                            coor.scalex, coor.scaley = ave, ave
+                        elif event.key == K_8:
+                            coor.origin = [display_width/2, display_height/2]
                         elif event.key == K_BACKSPACE:
-                            func = ""
+                            Func.remove()
+                        elif event.key == K_n:
+                            Func('')
                     elif "shift" in holding:
                         if event.key == K_6:
-                            func = func[0:index] + "**" + func[index:]
-                            index += 2
+                            func.insert("**")
                         elif event.key == K_8:
-                            func = func[0:index] + '*' + func[index:]
-                            index += 1
+                            func.insert('*')
                         elif event.key == K_9:
-                            func = func[0:index] + '(' + func[index:]
-                            index += 1
+                            func.insert('(')
                         elif event.key == K_0:
-                            func = func[0:index] + ')' + func[index:]
-                            index += 1
+                            func.insert(')')
                         elif event.key == K_EQUALS:
-                            func = func[0:index] + '+' + func[index:]
-                            index += 1
+                            func.insert('+')
                     elif event.key == K_BACKSPACE:
                         if func:
-                            func = func[:index-1] + func[index:]
-                            index -= 1
+                            func.delete()
                     elif event.key == K_LEFT:
-                        if index > 0:
-                            index -= 1
+                        func.move_cursor(-1)
                     elif event.key == K_RIGHT:
-                        if index < len(func):
-                            index += 1
+                        func.move_cursor(1)
+                    elif event.key == K_UP:
+                        Func.set_act('u')
+                    elif event.key == K_DOWN:
+                        Func.set_act('d')
                     elif event.key == K_SPACE:
-                        func += ' '
-                        index += 1
+                        func.insert(' ')
                     # basic input
                     else:
-                        func = func[0:index] + key_name + func[index:]
-                        index += 1
+                        func.insert(key_name)
             if event.type == KEYUP:
                 # releasing the modifier keys
                 key_name = pygame.key.name(event.key)
@@ -242,7 +289,8 @@ def main():
 
         coor.axis()
 
-
+        for func in Func.family:
+            func.draw()
 
         # show focus point location
 
@@ -258,7 +306,7 @@ def quit_all(data):
 
 
 def error():
-    quit_all('')
+    quit_all([])
 
 
 main()
