@@ -34,5 +34,6 @@ However, it is completed with minimalist design and simple algorithms.
 * Screenshot is saved with name "screenshot.jpg" on Desktop
 * Power of numbers, usually shown as ^, is automatically converted to ^
 * You can use all the functions in python math module, such as tan()
+
   [Python Math module] (https://docs.python.org/3/library/math.html)
 * instead of using a**b, try to use sqrt() if b = 1/2, or pow(a, b) to avoid Python false calculation
