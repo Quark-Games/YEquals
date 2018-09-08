@@ -13,7 +13,7 @@ pygame.init()
 display_width = 1000
 display_height = 720
 
-display = pygame.display.set_mode((display_width, display_height), RESIZABLE)
+display = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption("Function Simulator")
 icon_img = pygame.image.load("icon.png")
 pygame.display.set_icon(icon_img)
@@ -29,6 +29,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 
 MODIFIERS = ("alt", "ctrl", "escape", "meta", "shift", "tab", "windows")
+PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 
 
 class File:
@@ -39,7 +40,7 @@ class File:
     def get(self):
         try:
             with open(self.fname, 'r') as f:
-                cont = [s.replace('\n','') for s in f.readlines()]
+                cont = [s.replace('\n', '') for s in f.readlines()]
             return cont
         except FileNotFoundError:
             return ['']
@@ -67,13 +68,16 @@ class Message:
         Message.delay_msg.append([screen, textString, show_time * FPS])
 
     def show_delayed(self):
-        # if len(Message.delay_msg) >= Message.limit:
-        #     Message.delay_msg[]
-        for msg in Message.delay_msg:
-            self.put(msg[0], msg[1])
-            msg[2] -= 1
-            if msg[2] <= 0:
-                Message.delay_msg.remove(msg)
+        if len(Message.delay_msg) >= Message.limit:
+            del Message.delay_msg[:-5]
+        if len(Message.delay_msg) != 0:
+            self.put(display, "information")
+            self.indent()
+            for msg in Message.delay_msg:
+                self.put(msg[0], msg[1])
+                msg[2] -= 1
+                if msg[2] <= 0:
+                    Message.delay_msg.remove(msg)
 
     def reset(self):
         self.x = 10
@@ -248,6 +252,10 @@ def main():
                     if "meta" in holding:
                         if event.key == K_q:
                             quit_all([f.exp for f in Func.family])
+                        elif event.key == K_m:
+                            pygame.display.iconify()
+                        elif event.key == K_s:
+                            pygame.image.save(display, PATH)
                         elif event.key == K_MINUS:
                             coor.scalex /= 2
                             coor.scaley /= 2
@@ -329,7 +337,7 @@ def main():
         # show delayed message and renew timer
         message.show_delayed()
         # display logo
-        display.blit(logo_img, (display_width - 35, display_height - 36))
+        display.blit(logo_img, (display_width - 45, display_height - 46))
         # refresh display
         pygame.display.flip()
 
