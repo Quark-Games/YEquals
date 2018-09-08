@@ -13,13 +13,13 @@ pygame.init()
 display_width = 1000
 display_height = 720
 
-display = pygame.display.set_mode((display_width, display_height))
+display = pygame.display.set_mode((display_width, display_height), RESIZABLE)
 pygame.display.set_caption("Function Simulator")
 icon_img = pygame.image.load("icon.png")
 pygame.display.set_icon(icon_img)
 
 clock = pygame.time.Clock()
-FPS = 30
+FPS = 60
 
 font = pygame.font.Font(None, 20)
 logo_img = pygame.image.load("quarkgame_logo.png")
@@ -28,8 +28,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 
-MODIFIERS = ("alt", "ctrl", "escape", "meta", "shift", "tab", "windows")
-PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
+SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 
 
 class File:
@@ -49,6 +48,9 @@ class File:
         with open(self.fname, 'w') as f:
             for each in cont:
                 f.write(each + '\n')
+
+    def screenshot(self):
+        pygame.image.save(display, SS_PATH)
 
 
 class Message:
@@ -219,8 +221,8 @@ coor = Coordinate()
 
 
 def main():
+    global display_width, display_height
     functions = file.get()
-    holding = set()
 
     pygame.key.set_repeat(300, 80)
 
@@ -241,77 +243,66 @@ def main():
             if event.type == QUIT:
                 quit_all([f.exp for f in Func.family])
             if event.type == KEYDOWN:
-                # holding down the modifier keys
-                key_name = pygame.key.name(event.key)
-                for modifier in MODIFIERS:
-                    if modifier in key_name:
-                        holding.add(modifier)
-                        break
-                else:
-                    # special operations
-                    if "meta" in holding:
-                        if event.key == K_q:
-                            quit_all([f.exp for f in Func.family])
-                        elif event.key == K_m:
-                            pygame.display.iconify()
-                        elif event.key == K_s:
-                            pygame.image.save(display, PATH)
-                        elif event.key == K_MINUS:
-                            coor.scalex /= 2
-                            coor.scaley /= 2
-                        elif event.key == K_EQUALS:
-                            coor.scalex *= 2
-                            coor.scaley *= 2
-                        elif event.key == K_0:
-                            coor.origin = [display_width/2, display_height/2]
-                            coor.scalex, coor.scaley = 50, 50
-                        elif event.key == K_9:
-                            ave = (coor.scalex + coor.scaley) / 2
-                            coor.scalex, coor.scaley = ave, ave
-                        elif event.key == K_8:
-                            coor.origin = [display_width/2, display_height/2]
-                        elif event.key == K_BACKSPACE:
-                            Func.remove()
-                        elif event.key == K_n:
-                            Func('')
-                    elif "shift" in holding:
-                        if event.key == K_6:
-                            func.insert("**")
-                        elif event.key == K_8:
-                            func.insert('*')
-                        elif event.key == K_9:
-                            func.insert('(')
-                        elif event.key == K_0:
-                            func.insert(')')
-                        elif event.key == K_EQUALS:
-                            func.insert('+')
+                mods = pygame.key.get_mods()
+                # special operations
+                if mods & KMOD_META:
+                    if event.key == K_q:
+                        quit_all([f.exp for f in Func.family])
+                    elif event.key == K_m:
+                        pygame.display.iconify()
+                    elif event.key == K_s:
+                        file.screenshot()
+                    elif event.key == K_MINUS:
+                        coor.scalex /= 2
+                        coor.scaley /= 2
+                    elif event.key == K_EQUALS:
+                        coor.scalex *= 2
+                        coor.scaley *= 2
+                    elif event.key == K_0:
+                        coor.origin = [display_width/2, display_height/2]
+                        coor.scalex, coor.scaley = 50, 50
+                    elif event.key == K_9:
+                        ave = (coor.scalex + coor.scaley) / 2
+                        coor.scalex, coor.scaley = ave, ave
+                    elif event.key == K_8:
+                        coor.origin = [display_width/2, display_height/2]
                     elif event.key == K_BACKSPACE:
-                        if func:
-                            func.delete()
-                    elif event.key == K_LEFT:
-                        func.move_cursor(-1)
-                    elif event.key == K_RIGHT:
-                        func.move_cursor(1)
-                    elif event.key == K_UP:
-                        Func.set_act('u')
-                    elif event.key == K_DOWN:
-                        Func.set_act('d')
-                    elif event.key == K_RETURN:
-                        func.visible = not func.visible
-                    elif event.key == K_SPACE:
-                        func.insert(' ')
-                    # basic input
-                    else:
-                        func.insert(key_name)
-            if event.type == KEYUP:
-                # releasing the modifier keys
-                key_name = pygame.key.name(event.key)
-                for modifier in MODIFIERS:
-                    if modifier in key_name:
-                        holding.remove(modifier)
-                        break
+                        Func.remove()
+                    elif event.key == K_n:
+                        Func('')
+                elif mods & KMOD_SHIFT:
+                    if event.key == K_6:
+                        func.insert("**")
+                    elif event.key == K_8:
+                        func.insert('*')
+                    elif event.key == K_9:
+                        func.insert('(')
+                    elif event.key == K_0:
+                        func.insert(')')
+                    elif event.key == K_EQUALS:
+                        func.insert('+')
+                elif event.key == K_BACKSPACE:
+                    if func:
+                        func.delete()
+                elif event.key == K_LEFT:
+                    func.move_cursor(-1)
+                elif event.key == K_RIGHT:
+                    func.move_cursor(1)
+                elif event.key == K_UP:
+                    Func.set_act('u')
+                elif event.key == K_DOWN:
+                    Func.set_act('d')
+                elif event.key == K_RETURN:
+                    func.visible = not func.visible
+                elif event.key == K_SPACE:
+                    func.insert(' ')
+                # basic input
                 else:
-                    pass
+                    func.insert(pygame.key.name(event.key))
+            if event.type == pygame.VIDEORESIZE:
+                display_width, display_height = event.w, event.h
+                surface = pygame.display.set_mode((event.w, event.h),
+                                                  pygame.RESIZABLE)
 
         # mouse control
         mouse_press = pygame.mouse.get_pressed()
