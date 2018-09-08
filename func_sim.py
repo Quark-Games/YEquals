@@ -13,7 +13,7 @@ pygame.init()
 display_width = 1000
 display_height = 720
 
-display = pygame.display.set_mode((display_width, display_height))
+display = pygame.display.set_mode((display_width, display_height), RESIZABLE)
 pygame.display.set_caption("Function Simulator")
 icon_img = pygame.image.load("icon.png")
 pygame.display.set_icon(icon_img)
@@ -22,6 +22,7 @@ clock = pygame.time.Clock()
 FPS = 30
 
 font = pygame.font.Font(None, 20)
+logo_img = pygame.image.load("quarkgame_logo.png")
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -50,16 +51,29 @@ class File:
 
 
 class Message:
+    limit = 5
+    delay_msg = []
 
     def __init__(self):
         self.reset()
         self.font = pygame.font.Font(None, 20)
 
     def put(self, screen, textString):
-        print(textString)
         textBitmap = self.font.render(textString, True, BLACK)
         screen.blit(textBitmap, [self.x, self.y])
         self.y += self.line_height
+
+    def put_delayed(self, screen, textString, show_time=1):
+        Message.delay_msg.append([screen, textString, show_time * FPS])
+
+    def show_delayed(self):
+        # if len(Message.delay_msg) >= Message.limit:
+        #     Message.delay_msg[]
+        for msg in Message.delay_msg:
+            self.put(msg[0], msg[1])
+            msg[2] -= 1
+            if msg[2] <= 0:
+                Message.delay_msg.remove(msg)
 
     def reset(self):
         self.x = 10
@@ -95,21 +109,21 @@ class Coordinate:
         self.origin[1] += move_y
 
 
-file = File("data")
-message = Message()
-coor = Coordinate()
-
-
 class Func:
+    limit = 6
     family = []
     active = None
     _act_index = -1
 
     def __init__(self, exp):
-        self.exp = exp
-        self.cursor = len(exp)
-        Func.family.append(self)
-        Func.set_act(len(Func.family) - 1)
+        if len(Func.family) < Func.limit:
+            self.exp = exp
+            self.cursor = len(exp)
+            self.visible = True
+            Func.family.append(self)
+            Func.set_act(len(Func.family) - 1)
+        else:
+            message.put_delayed(display, "Number of function reached maximum")
 
     def set_act(index):
         if index == 'u':
@@ -125,9 +139,15 @@ class Func:
             Func._act_index = index
 
     def remove():
-        index = Func.family.index(Func.active)
-        Func.family.remove(Func.active)
-        Func.set_act(index - 1)
+        if Func.family:
+            index = Func.family.index(Func.active)
+            Func.family.remove(Func.active)
+            if index == len(Func.family):
+                Func.set_act(index-1)
+            else:
+                Func.set_act(index)
+        else:
+            message.put_delayed(display, "No function to remove")
 
     def move_cursor(self, move):
         if move == -1:
@@ -142,28 +162,30 @@ class Func:
         self.cursor += len(string)
 
     def delete(self):
-        self.exp = self.exp[:self.cursor-1] + self.exp[self.cursor:]
-        self.cursor -= 1
+        if self.exp:
+            self.exp = self.exp[:self.cursor-1] + self.exp[self.cursor:]
+            self.cursor -= 1
 
     def draw(self):
         # draw graph of function
-        old_pos = (-1, -1)
-        drawability = display_width
-        for pixel_x in range(0, display_width):
-            try:
-                x = (pixel_x - coor.origin[0]) / coor.scalex
-                y = eval(self.exp)
-                pixel_y = coor.origin[1] - y * coor.scaley
-                temp = 0 < old_pos[1] < display_height
-                temp = temp or 0 < pixel_y < display_height
-                if pixel_x - old_pos[0] <= 1 and temp:
-                    pygame.draw.line(display,
-                                     BLACK,
-                                     old_pos,
-                                     (int(pixel_x), int(pixel_y)))
-                old_pos = (int(pixel_x), int(pixel_y))
-            except Exception:
-                drawability -= 1
+        if self.visible:
+            old_pos = (-1, -1)
+            drawability = display_width
+            for pixel_x in range(0, display_width):
+                try:
+                    x = (pixel_x - coor.origin[0]) / coor.scalex
+                    y = eval(self.exp)
+                    pixel_y = coor.origin[1] - y * coor.scaley
+                    temp = 0 < old_pos[1] < display_height
+                    temp = temp or 0 < pixel_y < display_height
+                    if pixel_x - old_pos[0] <= 1 and temp:
+                        pygame.draw.line(display,
+                                         BLACK,
+                                         old_pos,
+                                         (int(pixel_x), int(pixel_y)))
+                    old_pos = (int(pixel_x), int(pixel_y))
+                except Exception:
+                    drawability -= 1
 
         # display function expression
         if Func.active == self:
@@ -173,8 +195,10 @@ class Func:
         else:
             message.put(display, "y = " + self.exp)
 
-        # display drawability message
-        if not drawability:
+        # display function status
+        if not self.visible:
+            msg = "the function is set to invisible"
+        elif not drawability:
             msg = "the function is not drawable"
         elif drawability != display_width:
             msg = "the function is not consistant"
@@ -185,16 +209,25 @@ class Func:
         message.unindent()
 
 
+file = File("data")
+message = Message()
+coor = Coordinate()
+
+
 def main():
     functions = file.get()
     holding = set()
 
     pygame.key.set_repeat(300, 80)
 
-    for func in functions:
-        Func(func)
+    if functions:
+        for func in functions:
+            Func(func)
+    else:
+        Func('')
 
     while True:
+
         # reset
         message.reset()
         func = Func.active
@@ -202,7 +235,7 @@ def main():
         # keyboard controls
         for event in pygame.event.get():
             if event.type == QUIT:
-                quit_all(Func.family)
+                quit_all([f.exp for f in Func.family])
             if event.type == KEYDOWN:
                 # holding down the modifier keys
                 key_name = pygame.key.name(event.key)
@@ -214,7 +247,7 @@ def main():
                     # special operations
                     if "meta" in holding:
                         if event.key == K_q:
-                            quit_all(Func.family)
+                            quit_all([f.exp for f in Func.family])
                         elif event.key == K_MINUS:
                             coor.scalex /= 2
                             coor.scaley /= 2
@@ -255,6 +288,8 @@ def main():
                         Func.set_act('u')
                     elif event.key == K_DOWN:
                         Func.set_act('d')
+                    elif event.key == K_RETURN:
+                        func.visible = not func.visible
                     elif event.key == K_SPACE:
                         func.insert(' ')
                     # basic input
@@ -286,14 +321,16 @@ def main():
 
         # display
         display.fill(WHITE)
-
+        # draw axis
         coor.axis()
-
+        # draw the graph and expression of every function
         for func in Func.family:
             func.draw()
-
-        # show focus point location
-
+        # show delayed message and renew timer
+        message.show_delayed()
+        # display logo
+        display.blit(logo_img, (display_width - 35, display_height - 36))
+        # refresh display
         pygame.display.flip()
 
         clock.tick(FPS)
