@@ -95,6 +95,7 @@ class Message:
                 msg[2] -= 1
                 if msg[2] <= 0:
                     Message.delay_msg.remove(msg)
+            self.unindent()
 
     def reset(self):
         self.x = 10
@@ -377,6 +378,11 @@ def main():
             func.draw()
         message.show_delayed()
         display.blit(logo_img, (display_width - 45, 10))
+
+        if pygame.key.get_pressed()[K_CAPSLOCK]:
+            message.put(display, "Frame per second")
+            message.indent()
+            message.put(display, str(clock.get_fps()))
 
         pygame.display.flip()
 
