@@ -19,7 +19,7 @@ icon_img = pygame.image.load("icon.png")
 pygame.display.set_icon(icon_img)
 
 clock = pygame.time.Clock()
-FPS = 60
+FPS = 30
 
 font = pygame.font.Font(None, 20)
 logo_img = pygame.image.load("quarkgame_logo.png")
@@ -29,6 +29,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
+CORNER = pygame.Rect(display_width - 45, display_height - 46, 45, 46)
 
 
 class File:
@@ -45,11 +46,12 @@ class File:
             return ['']
 
     def put(self, cont):
-        with open(self.fname, 'w') as f:
-            for each in cont:
-                f.write(each + '\n')
+        if cont:
+            with open(self.fname, 'w') as f:
+                for each in cont:
+                    f.write(each + '\n')
 
-    def screenshot(self):
+    def screenshot():
         pygame.image.save(display, SS_PATH)
 
 
@@ -59,7 +61,7 @@ class Message:
 
     def __init__(self):
         self.reset()
-        self.font = pygame.font.Font(None, 20)
+        self.font = pygame.font.Font(None, 21)
 
     def put(self, screen, textString):
         textBitmap = self.font.render(textString, True, BLACK)
@@ -84,7 +86,7 @@ class Message:
     def reset(self):
         self.x = 10
         self.y = 10
-        self.line_height = 15
+        self.line_height = 18
 
     def indent(self):
         self.x += 10
@@ -215,14 +217,16 @@ class Func:
         message.unindent()
 
 
-file = File("data")
+data = File("data")
+shortcuts = File("shortcuts")
 message = Message()
 coor = Coordinate()
 
 
 def main():
-    global display_width, display_height
-    functions = file.get()
+    global display_width, display_height, shortcuts
+    functions = data.get()
+    shortcuts = shortcuts.get()
 
     pygame.key.set_repeat(300, 80)
 
@@ -251,7 +255,7 @@ def main():
                     elif event.key == K_m:
                         pygame.display.iconify()
                     elif event.key == K_s:
-                        file.screenshot()
+                        File.screenshot()
                     elif event.key == K_MINUS:
                         coor.scalex /= 2
                         coor.scaley /= 2
@@ -299,10 +303,17 @@ def main():
                 # basic input
                 else:
                     func.insert(pygame.key.name(event.key))
-            if event.type == pygame.VIDEORESIZE:
+            elif event.type == MOUSEBUTTONDOWN:
+                if mods & KMOD_SHIFT:
+                    if event.button == 4:
+                        coor.scalex /= 1.2
+                        coor.scaley /= 1.2
+                    elif event.button == 5:
+                        coor.scalex *= 1.2
+                        coor.scaley *= 1.2
+            elif event.type == VIDEORESIZE:
                 display_width, display_height = event.w, event.h
-                surface = pygame.display.set_mode((event.w, event.h),
-                                                  pygame.RESIZABLE)
+                pygame.display.set_mode((event.w, event.h), RESIZABLE)
 
         # mouse control
         mouse_press = pygame.mouse.get_pressed()
@@ -314,35 +325,52 @@ def main():
             coor.scalex *= 1 + mouse_move[0] / 100
             coor.scaley *= 1 + mouse_move[1] / -100
         else:
+            if CORNER.collidepoint(mouse_pos):
+                show_shortcuts()
             # reset mouse release position
             pygame.mouse.get_rel()
             focus_x = mouse_pos[0]
 
         # display
         display.fill(WHITE)
-        # draw axis
+
         coor.axis()
-        # draw the graph and expression of every function
         for func in Func.family:
             func.draw()
-        # show delayed message and renew timer
         message.show_delayed()
-        # display logo
         display.blit(logo_img, (display_width - 45, display_height - 46))
-        # refresh display
+
         pygame.display.flip()
 
         clock.tick(FPS)
 
 
-def quit_all(data):
-    file.put(data)
+def show_shortcuts():
+    message.reset()
+    display.fill(WHITE)
+    for shortcut in shortcuts:
+        message.put(display, shortcut)
+    pygame.display.flip()
+    mouse_pos = pygame.mouse.get_pos()
+
+    show = True
+    while show:
+        pygame.event.get()
+        mouse_pos = pygame.mouse.get_pos()
+        if not CORNER.collidepoint(mouse_pos):
+            show = not show
+        clock.tick(FPS)
+    message.reset()
+
+
+def quit_all(cont):
+    data.put(cont)
     pygame.quit()
     quit()
 
 
 def error():
-    quit_all([])
+    quit_all(None)
 
 
 main()

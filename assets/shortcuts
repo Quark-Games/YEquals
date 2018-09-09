@@ -1,0 +1,16 @@
+Command and Q - quit
+Command and M - minimise window
+Command and S - save screenshot
+Command and - (minus sign) - reduce scale (both x and y)
+Command and = (equal sign) - reduce scale (both x and y)
+Command and 0 - go back to default scale and origin
+Command and 9 - equalise the scale x and scale y
+Command and 8 - go back to origin
+Command and Backspace - remove function
+Command and N - add a new function
+Enter - make function visible/invisible
+up/down arrow - switch from functions
+left/right arrow - move cursor in function editor
+mouse left and drag - move origin
+mouse right and drag - adjust scale x and y according to movement
+Shift and middle mouse scroll - scale x and y
