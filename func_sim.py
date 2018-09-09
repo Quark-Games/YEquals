@@ -32,7 +32,8 @@ SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 ALTS = ((K_v, '√'),
         (K_p, 'π'),
         (K_t, '±'))
-SHIFTS = ((K_6, "^"),
+SHIFTS = ((K_5, "%"),
+          (K_6, "^"),
           (K_8, '*'),
           (K_9, '('),
           (K_0, ')'),
@@ -278,7 +279,7 @@ def main():
         # reset
         message.reset()
         func = Func.active
-        corner = pygame.Rect(display_width - 45, display_height - 46, 45, 46)
+        corner = pygame.Rect(display_width - 45, 0, 45, 36)
 
         # keyboard controls
         for event in pygame.event.get():
@@ -375,7 +376,7 @@ def main():
         for func in Func.family:
             func.draw()
         message.show_delayed()
-        display.blit(logo_img, (display_width - 45, display_height - 46))
+        display.blit(logo_img, (display_width - 45, 10))
 
         pygame.display.flip()
 
@@ -391,7 +392,7 @@ def show_shortcuts():
     message.indent()
     for shortcut in shortcuts:
         message.put(display, shortcut)
-    display.blit(logo_img, (display_width - 45, display_height - 46))
+    display.blit(logo_img, (display_width - 45, 10))
     pygame.display.flip()
 
     show = True
@@ -401,7 +402,7 @@ def show_shortcuts():
                 display_width, display_height = event.w, event.h
                 pygame.display.set_mode((event.w, event.h), RESIZABLE)
         mouse_pos = pygame.mouse.get_pos()
-        corner = pygame.Rect(display_width - 45, display_height - 46, 45, 46)
+        corner = pygame.Rect(display_width - 45, 0, 45, 46)
         if not corner.collidepoint(mouse_pos):
             show = not show
         clock.tick(FPS)
