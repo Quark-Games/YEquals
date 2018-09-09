@@ -29,6 +29,17 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
+ALTS = ((K_v, '√'),
+        (K_p, 'π'))
+SHIFTS = ((K_6, "^"),
+          (K_8, '*'),
+          (K_9, '('),
+          (K_0, ')'),
+          (K_EQUALS, '+'))
+SWITCH = (('√', "sqrt"),
+          ('^', "**"),
+          ('%', "*0.01"),
+          ('π', "pi"))
 
 
 class File:
@@ -117,7 +128,7 @@ class Coordinate:
 
 
 class Func:
-    limit = 6
+    limit = 8
     family = []
     active = None
     _act_index = -1
@@ -173,6 +184,12 @@ class Func:
             self.exp = self.exp[:self.cursor-1] + self.exp[self.cursor:]
             self.cursor -= 1
 
+    def true_exp(self):
+        exp = self.exp
+        for switch in SWITCH:
+            exp = exp.replace(switch[0], switch[1])
+        return exp
+
     def draw(self):
         # draw graph of function
         if self.visible:
@@ -181,7 +198,7 @@ class Func:
             for pixel_x in range(0, display_width):
                 try:
                     x = (pixel_x - coor.origin[0]) / coor.scalex
-                    y = eval(self.exp)
+                    y = eval(self.true_exp())
                     pixel_y = coor.origin[1] - y * coor.scaley
                     temp = 0 < old_pos[1] < display_height
                     temp = temp or 0 < pixel_y < display_height
@@ -195,12 +212,15 @@ class Func:
                     drawability -= 1
 
         # display function expression
-        if Func.active == self:
-            message.put(display,
-                        "y = " + self.exp[:self.cursor] +
-                        '|' + self.exp[self.cursor:])
+        if pygame.key.get_pressed()[K_TAB]:
+            message.put(display, "y = " + self.true_exp())
         else:
-            message.put(display, "y = " + self.exp)
+            if Func.active == self:
+                message.put(display,
+                            "y = " + self.exp[:self.cursor] +
+                            '|' + self.exp[self.cursor:])
+            else:
+                message.put(display, "y = " + self.exp)
 
         # display function status
         if not self.visible:
@@ -275,16 +295,13 @@ def main():
                     elif event.key == K_n:
                         Func('')
                 elif mods & KMOD_SHIFT:
-                    if event.key == K_6:
-                        func.insert("**")
-                    elif event.key == K_8:
-                        func.insert('*')
-                    elif event.key == K_9:
-                        func.insert('(')
-                    elif event.key == K_0:
-                        func.insert(')')
-                    elif event.key == K_EQUALS:
-                        func.insert('+')
+                    for shift in SHIFTS:
+                        if event.key == shift[0]:
+                            func.insert(shift[1])
+                elif mods & KMOD_ALT:
+                    for alt in ALTS:
+                        if event.key == alt[0]:
+                            func.insert(alt[1])
                 elif event.key == K_BACKSPACE:
                     if func:
                         func.delete()
@@ -302,7 +319,9 @@ def main():
                     func.insert(' ')
                 # basic input
                 else:
-                    func.insert(pygame.key.name(event.key))
+                    k_name = pygame.key.name(event.key)
+                    if len(k_name) == 1:
+                        func.insert(pygame.key.name(event.key))
             elif event.type == MOUSEBUTTONDOWN:
                 if mods & KMOD_SHIFT:
                     if event.button == 4:
@@ -348,10 +367,13 @@ def main():
 def show_shortcuts():
     global display_width, display_height
 
-    message.reset()
     display.fill(WHITE)
+    message.reset()
+    message.put(display, "Shortcuts")
+    message.indent()
     for shortcut in shortcuts:
         message.put(display, shortcut)
+    display.blit(logo_img, (display_width - 45, display_height - 46))
     pygame.display.flip()
 
     show = True
