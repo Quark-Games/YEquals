@@ -246,8 +246,8 @@ def main():
         for event in pygame.event.get():
             if event.type == QUIT:
                 quit_all([f.exp for f in Func.family])
+            mods = pygame.key.get_mods()
             if event.type == KEYDOWN:
-                mods = pygame.key.get_mods()
                 # special operations
                 if mods & KMOD_META:
                     if event.key == K_q:
