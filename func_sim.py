@@ -29,7 +29,6 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
-CORNER = pygame.Rect(display_width - 45, display_height - 46, 45, 46)
 
 
 class File:
@@ -241,6 +240,7 @@ def main():
         # reset
         message.reset()
         func = Func.active
+        corner = pygame.Rect(display_width - 45, display_height - 46, 45, 46)
 
         # keyboard controls
         for event in pygame.event.get():
@@ -325,7 +325,7 @@ def main():
             coor.scalex *= 1 + mouse_move[0] / 100
             coor.scaley *= 1 + mouse_move[1] / -100
         else:
-            if CORNER.collidepoint(mouse_pos):
+            if corner.collidepoint(mouse_pos):
                 show_shortcuts()
             # reset mouse release position
             pygame.mouse.get_rel()
@@ -346,18 +346,23 @@ def main():
 
 
 def show_shortcuts():
+    global display_width, display_height
+
     message.reset()
     display.fill(WHITE)
     for shortcut in shortcuts:
         message.put(display, shortcut)
     pygame.display.flip()
-    mouse_pos = pygame.mouse.get_pos()
 
     show = True
     while show:
-        pygame.event.get()
+        for event in pygame.event.get():
+            if event.type == VIDEORESIZE:
+                display_width, display_height = event.w, event.h
+                pygame.display.set_mode((event.w, event.h), RESIZABLE)
         mouse_pos = pygame.mouse.get_pos()
-        if not CORNER.collidepoint(mouse_pos):
+        corner = pygame.Rect(display_width - 45, display_height - 46, 45, 46)
+        if not corner.collidepoint(mouse_pos):
             show = not show
         clock.tick(FPS)
     message.reset()
