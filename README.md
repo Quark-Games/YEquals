@@ -11,7 +11,7 @@ However, it is completed with minimalist design and simple algorithms.
 
 ***
 
-# Shortcuts
+# Shortcuts (best on Mac)
 * ⌘ and Q - quit
 * ⌘ and M - minimise window
 * ⌘ and S - save screenshot
@@ -27,6 +27,7 @@ However, it is completed with minimalist design and simple algorithms.
 * left/right - move cursor in function editor
 * mouse left and drag - move origin
 * mouse right and drag - adjust scale x and y according to movement
+* ⇧ (shift) and middle mouse scroll - scale x xand y
 
 ***
 
