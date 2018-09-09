@@ -5,7 +5,7 @@ import os
 import re
 
 # set default directory to assets
-os.chdir("assets")
+os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
 
 # pygame display initiation
 pygame.init()
