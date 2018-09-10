@@ -178,6 +178,12 @@ class Func:
         elif move == 1:
             if self.cursor < len(self.exp):
                 self.cursor += 1
+        if move == -2:
+            if self.cursor > 0:
+                self.cursor = 0
+        elif move == 2:
+            if self.cursor < len(self.exp):
+                self.cursor = len(self.exp)
 
     def insert(self, string):
         self.exp = self.exp[0:self.cursor] + string + self.exp[self.cursor:]
@@ -314,6 +320,10 @@ def main():
                         Func.remove()
                     elif event.key == K_n:
                         Func('')
+                    elif event.key == K_LEFT:
+                        func.move_cursor(-2)
+                    elif event.key == K_RIGHT:
+                        func.move_cursor(2)
                 elif mods & KMOD_SHIFT:
                     for shift in SHIFTS:
                         if event.key == shift[0]:
