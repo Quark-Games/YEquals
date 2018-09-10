@@ -29,6 +29,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
+STROKE_WIDTH = 1
 ALTS = ((K_v, '√'),
         (K_p, 'π'),
         (K_t, '±'))
@@ -120,11 +121,13 @@ class Coordinate:
         pygame.draw.line(display,
                          RED,
                          (0, self.origin[1]),
-                         (display_width, self.origin[1]))
+                         (display_width, self.origin[1]),
+                         STROKE_WIDTH)
         pygame.draw.line(display,
                          RED,
                          (self.origin[0], 0),
-                         (self.origin[0], display_height))
+                         (self.origin[0], display_height),
+                         STROKE_WIDTH)
 
     def chori(self, move_x, move_y):
         self.origin[0] += move_x
@@ -230,7 +233,8 @@ class Func:
                     pygame.draw.line(display,
                                      BLACK,
                                      old_pos,
-                                     (int(pixel_x), int(pixel_y)))
+                                     (int(pixel_x), int(pixel_y)),
+                                     STROKE_WIDTH)
                 old_pos = (int(pixel_x), int(pixel_y))
             except Exception:
                 drawability -= 1
