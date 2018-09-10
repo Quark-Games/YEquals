@@ -29,7 +29,6 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
-STROKE_WIDTH = 1
 ALTS = ((K_v, '√'),
         (K_p, 'π'),
         (K_t, '±'))
@@ -111,6 +110,7 @@ class Message:
 
 
 class Coordinate:
+    _stroke_width = 2
 
     def __init__(self):
         self.origin = [display_width / 2, display_height / 2]
@@ -122,12 +122,12 @@ class Coordinate:
                          RED,
                          (0, self.origin[1]),
                          (display_width, self.origin[1]),
-                         STROKE_WIDTH)
+                         Coordinate._stroke_width)
         pygame.draw.line(display,
                          RED,
                          (self.origin[0], 0),
                          (self.origin[0], display_height),
-                         STROKE_WIDTH)
+                         Coordinate._stroke_width)
 
     def chori(self, move_x, move_y):
         self.origin[0] += move_x
@@ -139,6 +139,8 @@ class Func:
     family = []
     active = None
     _act_index = -1
+    _accuracy = 1
+    _stroke_width = 2
 
     def __init__(self, exp):
         if len(Func.family) < Func.limit:
@@ -222,8 +224,9 @@ class Func:
         # draw graph of function
         old_pos = (-1, -1)
         drawability = display_width
-        for pixel_x in range(0, display_width):
+        for raw_x in range(-1, display_width * Func._accuracy):
             try:
+                pixel_x = raw_x / Func._accuracy
                 x = (pixel_x - coor.origin[0]) / coor.scalex
                 y = eval(exp)
                 pixel_y = coor.origin[1] - y * coor.scaley
@@ -234,7 +237,7 @@ class Func:
                                      BLACK,
                                      old_pos,
                                      (int(pixel_x), int(pixel_y)),
-                                     STROKE_WIDTH)
+                                     Func._stroke_width)
                 old_pos = (int(pixel_x), int(pixel_y))
             except Exception:
                 drawability -= 1
