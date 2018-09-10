@@ -11,6 +11,7 @@ Command & N - add a new function
 Enter - make function visible/invisible
 up/down arrow - switch from functions
 left/right arrow - move cursor in function editor
+Command & left/right - move cursor to left most or right most
 mouse left & drag - move origin
 mouse right & drag - adjust scale x and y according to movement
 Shift & middle mouse scroll - scale x and y
