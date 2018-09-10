@@ -15,3 +15,5 @@ mouse left & drag - move origin
 mouse right & drag - adjust scale x and y according to movement
 Shift & middle mouse scroll - scale x and y
 TAB - show processed python-friendly expressions
+Tab - show processed python-friendly expressions
+Caps lock - toggle frame per second message

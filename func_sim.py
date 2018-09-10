@@ -5,7 +5,7 @@ import os
 import re
 
 # set default directory to assets
-os.chdir("assets")
+os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
 
 # pygame display initiation
 pygame.init()
@@ -30,8 +30,10 @@ RED = (255, 0, 0)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 ALTS = ((K_v, '√'),
-        (K_p, 'π'))
-SHIFTS = ((K_6, "^"),
+        (K_p, 'π'),
+        (K_t, '±'))
+SHIFTS = ((K_5, "%"),
+          (K_6, "^"),
           (K_8, '*'),
           (K_9, '('),
           (K_0, ')'),
@@ -39,7 +41,8 @@ SHIFTS = ((K_6, "^"),
 SWITCH = (('√', "sqrt"),
           ('^', "**"),
           ('%', "*0.01"),
-          ('π', "pi"))
+          ('π', "pi"),
+          ("+-", '±'))
 
 
 class File:
@@ -73,8 +76,8 @@ class Message:
         self.reset()
         self.font = pygame.font.Font(None, 21)
 
-    def put(self, screen, textString):
-        textBitmap = self.font.render(textString, True, BLACK)
+    def put(self, screen, textString, color=BLACK):
+        textBitmap = self.font.render(textString, True, color)
         screen.blit(textBitmap, [self.x, self.y])
         self.y += self.line_height
 
@@ -92,6 +95,7 @@ class Message:
                 msg[2] -= 1
                 if msg[2] <= 0:
                     Message.delay_msg.remove(msg)
+            self.unindent()
 
     def reset(self):
         self.x = 10
@@ -99,10 +103,10 @@ class Message:
         self.line_height = 18
 
     def indent(self):
-        self.x += 10
+        self.x += 15
 
     def unindent(self):
-        self.x -= 10
+        self.x -= 15
 
 
 class Coordinate:
@@ -191,26 +195,42 @@ class Func:
         return exp
 
     def draw(self):
-        # draw graph of function
+        exp = self.true_exp()
         if self.visible:
-            old_pos = (-1, -1)
-            drawability = display_width
-            for pixel_x in range(0, display_width):
-                try:
-                    x = (pixel_x - coor.origin[0]) / coor.scalex
-                    y = eval(self.true_exp())
-                    pixel_y = coor.origin[1] - y * coor.scaley
-                    temp = 0 < old_pos[1] < display_height
-                    temp = temp or 0 < pixel_y < display_height
-                    if pixel_x - old_pos[0] <= 1 and temp:
-                        pygame.draw.line(display,
-                                         BLACK,
-                                         old_pos,
-                                         (int(pixel_x), int(pixel_y)))
-                    old_pos = (int(pixel_x), int(pixel_y))
-                except Exception:
-                    drawability -= 1
+            if type(exp) == str:
+                if '±' not in exp:
+                    self.graph(exp)
+                else:
+                    message.indent()
+                    self.graph(exp.replace('±', '+'))
+                    self.graph(exp.replace('±', '-'))
+                    message.unindent()
+            else:
+                pass
+        self.show()
 
+    def graph(self, exp):
+        # draw graph of function
+        old_pos = (-1, -1)
+        drawability = display_width
+        for pixel_x in range(0, display_width):
+            try:
+                x = (pixel_x - coor.origin[0]) / coor.scalex
+                y = eval(exp)
+                pixel_y = coor.origin[1] - y * coor.scaley
+                temp = 0 < old_pos[1] < display_height
+                temp = temp or 0 < pixel_y < display_height
+                if pixel_x - old_pos[0] <= 1 and temp:
+                    pygame.draw.line(display,
+                                     BLACK,
+                                     old_pos,
+                                     (int(pixel_x), int(pixel_y)))
+                old_pos = (int(pixel_x), int(pixel_y))
+            except Exception:
+                drawability -= 1
+        self.drawability = drawability
+
+    def show(self):
         # display function expression
         if pygame.key.get_pressed()[K_TAB]:
             message.put(display, "y = " + self.true_exp())
@@ -225,9 +245,9 @@ class Func:
         # display function status
         if not self.visible:
             msg = "the function is set to invisible"
-        elif not drawability:
+        elif not self.drawability:
             msg = "the function is not drawable"
-        elif drawability != display_width:
+        elif self.drawability != display_width:
             msg = "the function is not consistant"
         else:
             msg = "the function is consistant in view"
@@ -260,7 +280,7 @@ def main():
         # reset
         message.reset()
         func = Func.active
-        corner = pygame.Rect(display_width - 45, display_height - 46, 45, 46)
+        corner = pygame.Rect(display_width - 45, 0, 45, 36)
 
         # keyboard controls
         for event in pygame.event.get():
@@ -357,7 +377,12 @@ def main():
         for func in Func.family:
             func.draw()
         message.show_delayed()
-        display.blit(logo_img, (display_width - 45, display_height - 46))
+        display.blit(logo_img, (display_width - 45, 10))
+
+        if pygame.key.get_pressed()[K_CAPSLOCK]:
+            message.put(display, "Frame per second")
+            message.indent()
+            message.put(display, str(clock.get_fps()))
 
         pygame.display.flip()
 
@@ -373,7 +398,7 @@ def show_shortcuts():
     message.indent()
     for shortcut in shortcuts:
         message.put(display, shortcut)
-    display.blit(logo_img, (display_width - 45, display_height - 46))
+    display.blit(logo_img, (display_width - 45, 10))
     pygame.display.flip()
 
     show = True
@@ -383,7 +408,7 @@ def show_shortcuts():
                 display_width, display_height = event.w, event.h
                 pygame.display.set_mode((event.w, event.h), RESIZABLE)
         mouse_pos = pygame.mouse.get_pos()
-        corner = pygame.Rect(display_width - 45, display_height - 46, 45, 46)
+        corner = pygame.Rect(display_width - 45, 0, 45, 46)
         if not corner.collidepoint(mouse_pos):
             show = not show
         clock.tick(FPS)
