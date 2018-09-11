@@ -7,7 +7,8 @@ Command & 0 - go back to default scale and origin
 Command & 9 - equalise the scale x and scale y
 Command & 8 - go back to origin
 Command & Backspace - remove function
-Command & N - add a new function
+Command & Enter - add a new function
+Command & F - show/hide function tab
 Enter - make function visible/invisible
 up/down arrow - switch from functions
 left/right arrow - move cursor in function editor

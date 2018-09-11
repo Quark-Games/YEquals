@@ -10,7 +10,7 @@ os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
 # pygame display initiation
 pygame.init()
 
-display_width = 1000
+display_width = 1200
 display_height = 720
 
 display = pygame.display.set_mode((display_width, display_height), RESIZABLE)
@@ -27,22 +27,30 @@ logo_img = pygame.image.load("quarkgame_logo.png")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+LIGHT_BLUE = (153, 204, 255)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
+FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]"
+
 ALTS = ((K_v, '√'),
         (K_p, 'π'),
-        (K_t, '±'))
+        (K_t, '±'),
+        (K_EQUALS, '≠'))
 SHIFTS = ((K_5, "%"),
           (K_6, "^"),
           (K_8, '*'),
           (K_9, '('),
           (K_0, ')'),
-          (K_EQUALS, '+'))
+          (K_EQUALS, '+'),
+          (K_COMMA, '<'),
+          (K_PERIOD, '>'))
 SWITCH = (('√', "sqrt"),
           ('^', "**"),
           ('%', "*0.01"),
           ('π', "pi"),
-          ("+-", '±'))
+          ("+-", '±'),
+          ('=', "=="),
+          ('≠', "!="))
 
 
 class File:
@@ -200,27 +208,42 @@ class Func:
             self.cursor -= 1
 
     def true_exp(self):
-        exp = self.exp
-        for switch in SWITCH:
-            exp = exp.replace(switch[0], switch[1])
-        return exp
+        exp_match = re.match(FULL_EXP, self.exp)
+        if not exp_match:
+            exp = self.exp
+            for switch in SWITCH:
+                exp = exp.replace(switch[0], switch[1])
+            return exp
+        else:
+            exp = exp_match.group("exp")
+            domain = exp_match.group("domain")
+            for switch in SWITCH:
+                exp = exp.replace(switch[0], switch[1])
+                domain = domain.replace(switch[0], switch[1])
+            return exp, domain
 
     def draw(self):
-        exp = self.true_exp()
+        true_exp = self.true_exp()
         if self.visible:
-            if type(exp) == str:
-                if '±' not in exp:
-                    self.graph(exp)
+            if type(true_exp) == str:
+                if '±' not in true_exp:
+                    self.graph(true_exp)
                 else:
                     message.indent()
-                    self.graph(exp.replace('±', '+'))
-                    self.graph(exp.replace('±', '-'))
+                    self.graph(true_exp.replace('±', '+'))
+                    self.graph(true_exp.replace('±', '-'))
                     message.unindent()
             else:
-                pass
-        self.show()
+                exp, domain = true_exp
+                if '±' not in exp:
+                    self.graph(exp, domain)
+                else:
+                    message.indent()
+                    self.graph(exp.replace('±', '+'), domain)
+                    self.graph(exp.replace('±', '-'), domain)
+                    message.unindent()
 
-    def graph(self, exp):
+    def graph(self, exp, domain="True"):
         # draw graph of function
         old_pos = (-1, -1)
         drawability = display_width
@@ -232,6 +255,7 @@ class Func:
                 pixel_y = coor.origin[1] - y * coor.scaley
                 temp = 0 < old_pos[1] < display_height
                 temp = temp or 0 < pixel_y < display_height
+                temp = temp and eval(domain)
                 if pixel_x - old_pos[0] <= 1 and temp:
                     pygame.draw.line(display,
                                      BLACK,
@@ -246,7 +270,7 @@ class Func:
     def show(self):
         # display function expression
         if pygame.key.get_pressed()[K_TAB]:
-            message.put(display, "y = " + self.true_exp())
+            message.put(display, "y = " + str(self.true_exp()))
         else:
             if Func.active == self:
                 message.put(display,
@@ -268,11 +292,21 @@ class Func:
         message.put(display, msg)
         message.unindent()
 
+class Tab:
+    def __init__(self):
+        self.visible = True
+
+    def draw(self):
+        if self.visible:
+            pygame.draw.rect(display, LIGHT_BLUE, (0, 0, 300, display_height))
+            for func in Func.family:
+                func.show()
 
 data = File("data")
 shortcuts = File("shortcuts")
 message = Message()
 coor = Coordinate()
+tab = Tab()
 
 
 def main():
@@ -325,8 +359,10 @@ def main():
                         coor.origin = [display_width/2, display_height/2]
                     elif event.key == K_BACKSPACE:
                         Func.remove()
-                    elif event.key == K_n:
+                    elif event.key == K_RETURN:
                         Func('')
+                    elif event.key == K_f:
+                        tab.visible = not tab.visible
                     elif event.key == K_LEFT:
                         func.move_cursor(-2)
                     elif event.key == K_RIGHT:
@@ -391,8 +427,12 @@ def main():
         display.fill(WHITE)
 
         coor.axis()
+
         for func in Func.family:
             func.draw()
+
+        tab.draw()
+
         message.show_delayed()
         display.blit(logo_img, (display_width - 45, 10))
 
