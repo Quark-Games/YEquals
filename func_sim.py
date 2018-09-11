@@ -261,9 +261,9 @@ class Func:
         elif not self.drawability:
             msg = "the function is not drawable"
         elif self.drawability != display_width:
-            msg = "the function is not consistant"
+            msg = "the function is not consistent"
         else:
-            msg = "the function is consistant in view"
+            msg = "the function is consistent in view"
         message.indent()
         message.put(display, msg)
         message.unindent()
