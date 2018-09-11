@@ -3,6 +3,7 @@ from pygame.locals import *
 from math import *
 import os
 import re
+import pyperclip
 
 # set default directory to assets
 os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
@@ -363,6 +364,11 @@ def main():
                         Func('')
                     elif event.key == K_f:
                         tab.visible = not tab.visible
+                    elif event.key == K_c:
+                        pyperclip.copy(func.exp)
+                    elif event.key == K_v:
+                        func.exp = pyperclip.paste()
+                        func.move_cursor(2)
                     elif event.key == K_LEFT:
                         func.move_cursor(-2)
                     elif event.key == K_RIGHT:
