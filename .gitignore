@@ -101,3 +101,4 @@ venv.bak/
 /site
 
 # mypy
+assets/data
