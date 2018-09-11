@@ -32,7 +32,7 @@ LIGHT_BLUE = (153, 204, 255)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]"
-COE_PAIR = r"[0-9|\)]x"
+COE_PAIR = r"[0-9|\)|x]x"
 
 ALTS = ((K_v, '√'),
         (K_p, 'π'),
@@ -221,8 +221,9 @@ class Func:
 
         for switch in SWITCH:
             exp = exp.replace(switch[0], switch[1])
-        for pair in set(re.findall(COE_PAIR, exp)):
-            exp = exp.replace(pair, pair[0] + '*' + pair[1])
+        while re.findall(COE_PAIR, exp):
+            for pair in set(re.findall(COE_PAIR, exp)):
+                exp = exp.replace(pair, pair[0] + '*' + pair[1])
 
         if not exp_match:
             return exp
