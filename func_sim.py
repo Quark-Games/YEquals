@@ -329,6 +329,14 @@ class Tab:
                 func.show()
 
     def resize_win(self, w, h):
+        global display_width, display_height
+        if w < 800:
+            w = 800
+            message.put_delayed(display, "minimal window width is 800")
+        if h < 600:
+            h = 600
+            message.put_delayed(display, "minimal window height is 600")
+        display_width, display_height = w, h
         pygame.display.set_mode((w, h), RESIZABLE)
 
 
@@ -457,8 +465,7 @@ def main():
                         coor.scalex *= 1.2
                         coor.scaley *= 1.2
             elif event.type == VIDEORESIZE:
-                display_width, display_height = event.w, event.h
-                tab.resize_win(display_width, display_height)
+                tab.resize_win(event.w, event.h)
 
         # mouse control
         mouse_press = pygame.mouse.get_pressed()
@@ -519,8 +526,7 @@ def show_shortcuts():
                 if event.key == K_q:
                     quit_all([f.exp for f in Func.family])
             if event.type == VIDEORESIZE:
-                display_width, display_height = event.w, event.h
-                tab.resize_win(display_width, display_height)
+                tab.resize_win(event.w, event.h)
         mouse_pos = pygame.mouse.get_pos()
         corner = pygame.Rect(display_width - 45, 0, 45, 46)
         if not corner.collidepoint(mouse_pos):
