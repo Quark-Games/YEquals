@@ -3,6 +3,7 @@ from pygame.locals import *
 from math import *
 import os
 import re
+import pickle
 import pyperclip
 
 # set default directory to assets
@@ -10,6 +11,8 @@ os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
 
 # pygame display initiation
 pygame.init()
+
+pygame.key.set_repeat(300, 80)
 
 display_width = 1200
 display_height = 720
@@ -62,17 +65,14 @@ class File:
 
     def get(self):
         try:
-            with open(self.fname, 'r') as f:
-                cont = [s.replace('\n', '') for s in f.readlines()]
-            return cont
-        except FileNotFoundError:
-            return ['']
+            with open(self.fname, 'rb') as f:
+                Func.family = pickle.load(f)
+        except Exception as e:
+            message.put_delayed("Error occur while loading data")
 
-    def put(self, cont):
-        if cont:
-            with open(self.fname, 'w') as f:
-                for each in cont:
-                    f.write(each + '\n')
+    def put(self):
+        with open(self.fname, 'wb') as f:
+            pickle.dump(Func.family, f)
 
     def screenshot():
         pygame.image.save(display, SS_PATH)
@@ -341,7 +341,6 @@ class Tab:
 
 
 data = File("data")
-shortcuts = File("shortcuts")
 message = Message()
 coor = Coordinate()
 tab = Tab()
@@ -349,16 +348,10 @@ tab = Tab()
 
 def main():
     global display_width, display_height, shortcuts
-    functions = data.get()
-    shortcuts = shortcuts.get()
 
-    pygame.key.set_repeat(300, 80)
-
-    if functions:
-        for func in functions:
-            Func(func)
-    else:
-        Func('')
+    data.get()
+    with open("shortcuts", 'r') as f:
+        shortcuts = [line.replace('\n','') for line in f.readlines()]
 
     while True:
 
@@ -370,13 +363,13 @@ def main():
         # keyboard controls
         for event in pygame.event.get():
             if event.type == QUIT:
-                quit_all([f.exp for f in Func.family])
+                quit_all()
             mods = pygame.key.get_mods()
             if event.type == KEYDOWN:
                 # special operations
                 if mods & KMOD_META:
                     if event.key == K_q:
-                        quit_all([f.exp for f in Func.family])
+                        quit_all()
                     elif event.key == K_m:
                         pygame.display.iconify()
                     elif event.key == K_s:
@@ -524,7 +517,7 @@ def show_shortcuts():
             mods = pygame.key.get_mods()
             if mods & KMOD_META:
                 if event.key == K_q:
-                    quit_all([f.exp for f in Func.family])
+                    quit_all()
             if event.type == VIDEORESIZE:
                 tab.resize_win(event.w, event.h)
         mouse_pos = pygame.mouse.get_pos()
@@ -535,16 +528,19 @@ def show_shortcuts():
     message.reset()
 
 
-def quit_all(cont):
-    data.put(cont)
+def quit_all(save=True):
+    if save:
+        data.put()
     pygame.quit()
     quit()
 
 
-def error():
+def error(e_name):
     display.fill(WHITE)
     message.reset()
     message.put(display, "Error")
+    message.indent()
+    message.put(display, "Encoutered error name: " + e_name)
     display.blit(logo_img, (display_width - 45, 10))
     pygame.display.flip()
 
@@ -552,8 +548,10 @@ def error():
     while show:
         for event in pygame.event.get():
             if event.type == QUIT:
-                quit_all(None)
+                quit_all(False)
         clock.tick(FPS)
 
-
-main()
+try:
+    main()
+except Exception as e:
+    error(e.__name__)
