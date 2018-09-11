@@ -123,7 +123,7 @@ class Coordinate:
     _stroke_width = 2
 
     def __init__(self):
-        self.origin = [display_width / 2, display_height / 2]
+        self.origin = [display_width / 2 + 150, display_height / 2]
         self.scalex = 50
         self.scaley = 50
 
@@ -153,6 +153,9 @@ class Func:
     _stroke_width = 2
 
     def __init__(self, exp):
+        if not tab.visible:
+            message.put_delayed(display, "function tab not active")
+            return
         if len(Func.family) < Func.limit:
             self.exp = exp
             self.cursor = len(exp)
@@ -163,6 +166,9 @@ class Func:
             message.put_delayed(display, "Number of function reached maximum")
 
     def set_act(index):
+        if not tab.visible:
+            message.put_delayed(display, "function tab not active")
+            return
         if index == 'u':
             if Func._act_index > 0:
                 Func._act_index -= 1
@@ -176,6 +182,9 @@ class Func:
             Func._act_index = index
 
     def remove():
+        if not tab.visible:
+            message.put_delayed(display, "function tab not active")
+            return
         if Func.family:
             index = Func.family.index(Func.active)
             Func.family.remove(Func.active)
@@ -187,6 +196,9 @@ class Func:
             message.put_delayed(display, "No function to remove")
 
     def move_cursor(self, move):
+        if not tab.visible:
+            message.put_delayed(display, "function tab not active")
+            return
         if move == -1:
             if self.cursor > 0:
                 self.cursor -= 1
@@ -201,10 +213,16 @@ class Func:
                 self.cursor = len(self.exp)
 
     def insert(self, string):
+        if not tab.visible:
+            message.put_delayed(display, "function tab not active")
+            return
         self.exp = self.exp[0:self.cursor] + string + self.exp[self.cursor:]
         self.cursor += len(string)
 
     def delete(self):
+        if not tab.visible:
+            message.put_delayed(display, "function tab not active")
+            return
         if self.exp:
             self.exp = self.exp[:self.cursor-1] + self.exp[self.cursor:]
             self.cursor -= 1
@@ -304,11 +322,15 @@ class Tab:
     def __init__(self):
         self.visible = True
 
-    def draw(self):
+    def func_tab(self):
         if self.visible:
             pygame.draw.rect(display, LIGHT_BLUE, (0, 0, 300, display_height))
             for func in Func.family:
                 func.show()
+
+    def resize_win(self, w, h):
+        pygame.display.set_mode((w, h), RESIZABLE)
+
 
 data = File("data")
 shortcuts = File("shortcuts")
@@ -358,24 +380,42 @@ def main():
                         coor.scalex *= 2
                         coor.scaley *= 2
                     elif event.key == K_0:
-                        coor.origin = [display_width/2, display_height/2]
+                        if tab.visible:
+                            coor.origin = [display_width / 2 + 150,
+                                           display_height / 2]
+                        else:
+                            coor.origin = [display_width/2, display_height/2]
                         coor.scalex, coor.scaley = 50, 50
                     elif event.key == K_9:
                         ave = (coor.scalex + coor.scaley) / 2
                         coor.scalex, coor.scaley = ave, ave
                     elif event.key == K_8:
-                        coor.origin = [display_width/2, display_height/2]
+                        if tab.visible:
+                            coor.origin = [display_width / 2 + 150,
+                                           display_height / 2]
+                        else:
+                            coor.origin = [display_width/2, display_height/2]
                     elif event.key == K_BACKSPACE:
                         Func.remove()
                     elif event.key == K_RETURN:
                         Func('')
                     elif event.key == K_f:
                         tab.visible = not tab.visible
+                        if tab.visible:
+                            coor.chori(150, 0)
+                        else:
+                            coor.chori(-150, 0)
                     elif event.key == K_c:
-                        pyperclip.copy(func.exp)
+                        if not tab.visible:
+                            message.put_delayed(display, "function tab not active")
+                        else:
+                            pyperclip.copy(func.exp)
                     elif event.key == K_v:
-                        func.exp = pyperclip.paste()
-                        func.move_cursor(2)
+                        if not tab.visible:
+                            message.put_delayed(display, "function tab not active")
+                        else:
+                            func.exp = pyperclip.paste()
+                            func.move_cursor(2)
                     elif event.key == K_LEFT:
                         func.move_cursor(-2)
                     elif event.key == K_RIGHT:
@@ -418,7 +458,7 @@ def main():
                         coor.scaley *= 1.2
             elif event.type == VIDEORESIZE:
                 display_width, display_height = event.w, event.h
-                pygame.display.set_mode((event.w, event.h), RESIZABLE)
+                tab.resize_win(display_width, display_height)
 
         # mouse control
         mouse_press = pygame.mouse.get_pressed()
@@ -444,7 +484,7 @@ def main():
         for func in Func.family:
             func.draw()
 
-        tab.draw()
+        tab.func_tab()
 
         message.show_delayed()
         display.blit(logo_img, (display_width - 45, 10))
@@ -474,9 +514,13 @@ def show_shortcuts():
     show = True
     while show:
         for event in pygame.event.get():
+            mods = pygame.key.get_mods()
+            if mods & KMOD_META:
+                if event.key == K_q:
+                    quit_all([f.exp for f in Func.family])
             if event.type == VIDEORESIZE:
                 display_width, display_height = event.w, event.h
-                pygame.display.set_mode((event.w, event.h), RESIZABLE)
+                tab.resize_win(display_width, display_height)
         mouse_pos = pygame.mouse.get_pos()
         corner = pygame.Rect(display_width - 45, 0, 45, 46)
         if not corner.collidepoint(mouse_pos):
@@ -492,7 +536,18 @@ def quit_all(cont):
 
 
 def error():
-    quit_all(None)
+    display.fill(WHITE)
+    message.reset()
+    message.put(display, "Error")
+    display.blit(logo_img, (display_width - 45, 10))
+    pygame.display.flip()
+
+    show = True
+    while show:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                quit_all(None)
+        clock.tick(FPS)
 
 
 main()
