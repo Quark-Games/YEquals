@@ -295,7 +295,7 @@ class Func:
 
 class Tab:
     def __init__(self):
-        self.visible = True
+        self.visible = False
 
     def draw(self):
         if self.visible:
