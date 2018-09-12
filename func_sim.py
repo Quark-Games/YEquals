@@ -6,8 +6,8 @@ import re
 import pickle
 import pyperclip
 
-CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018",
-           "Group member Michael Wang and Jeff Sui assisted with this project"]
+CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018.",
+           "Pygame is used as the major GUI framework."]
 
 # set default directory to assets
 os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
@@ -146,8 +146,8 @@ class Coordinate:
 
     def __init__(self):
         self.origin = [display_width / 2 + 150, display_height / 2]
-        self.scalex = 50
-        self.scaley = 50
+        self.scalex = 25
+        self.scaley = 25
         self.axis_show = True
         self.grid_show = True
 
@@ -168,7 +168,7 @@ class Coordinate:
         if not self.grid_show:
             return
         ori_x, ori_y = map(int, coor.origin)
-        gap_x, gap_y = 50 / coor.scalex, 50 / coor.scaley
+        gap_x, gap_y = 80 / coor.scalex, 80 / coor.scaley
         gap_x = sig_figure(gap_x, 2)
         gap_y = sig_figure(gap_y, 2)
         gap_px = int(gap_x * coor.scalex)
@@ -180,7 +180,9 @@ class Coordinate:
                              (line_x, display_height),
                              Coordinate._stroke_width)
             val = (line_x - ori_x) / coor.scalex
-            message.label(line_x, ori_y, val)
+            if val != 0:
+                val = sig_figure(val, 2)
+                message.label(line_x, ori_y, val)
         for line_y in range(ori_y % gap_py, display_height, gap_py):
             pygame.draw.line(display,
                              GREY,
@@ -188,7 +190,9 @@ class Coordinate:
                              (display_width, line_y),
                              Coordinate._stroke_width)
             val = (ori_y - line_y) / coor.scaley
-            message.label(ori_x, line_y, val)
+            if val != 0:
+                val = sig_figure(val, 2)
+                message.label(ori_x, line_y, val)
 
     def chori(self, move_x, move_y):
         self.origin[0] += move_x
@@ -449,7 +453,7 @@ def main():
                                            display_height / 2]
                         else:
                             coor.origin = [display_width/2, display_height/2]
-                        coor.scalex, coor.scaley = 50, 50
+                        coor.scalex, coor.scaley = 80, 80
                     elif event.key == K_9:
                         ave = (coor.scalex + coor.scaley) / 2
                         coor.scalex, coor.scaley = ave, ave
