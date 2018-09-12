@@ -37,7 +37,7 @@ RED = (255, 0, 0)
 LIGHT_BLUE = (153, 204, 255)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
-FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]"
+FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]\s*$"
 COE_PAIR = r"[0-9|\)|x][x|\(]"
 
 ALTS = ((K_v, '√'),
