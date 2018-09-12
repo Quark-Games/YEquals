@@ -1,0 +1,26 @@
+>>> General <<<
+  Command & F - show/hide function tab
+  Command & A - show/hide axis tab
+  Command & Backspace - remove function
+  Command & Enter - add a new function
+  Command & - (minus sign) - reduce scale (both x and y)
+  Command & = (equal sign) - reduce scale (both x and y)
+  Command & 0 - go back to default scale and origin
+  Command & 9 - equalise the scale x and scale y
+  Command & 8 - go back to origin
+  Shift & Middle mouse scroll - scale x and y
+  Mouse left & drag - move origin
+  Mouse right & drag - adjust scale x and y according to movement
+  Command & S - save screenshot
+  Command & C - copy the entire line
+  Command & V - paste to replace current line
+  Command & M - minimise window
+  Command & Q - quit
+>>> Function tab <<<
+  Enter - make function visible/invisible
+  Up/Down arrow - switch between functions
+  Left/Right arrow - move cursor in function editor
+  Command & Left/Right - move cursor to left most or right most
+>>> Debug <<<
+  Tab - show processed python-friendly expressions
+  Caps lock - toggle frame per second message

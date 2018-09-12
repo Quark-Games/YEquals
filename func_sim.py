@@ -26,7 +26,7 @@ icon_img = pygame.image.load("icon.png")
 pygame.display.set_icon(icon_img)
 
 clock = pygame.time.Clock()
-FPS = 30
+FPS = 60
 
 font = pygame.font.Font(None, 20)
 logo_img = pygame.image.load("quarkgame_logo.png")
@@ -73,6 +73,7 @@ class File:
                 coor.origin = pickle.load(f)
                 coor.scalex = pickle.load(f)
                 coor.scaley = pickle.load(f)
+                coor.axis_show = pickle.load(f)
             if Func.family:
                 Func.active = Func.family[Func._act_index]
         except Exception as e:
@@ -84,6 +85,7 @@ class File:
             pickle.dump(coor.origin, f)
             pickle.dump(coor.scalex, f)
             pickle.dump(coor.scaley, f)
+            pickle.dump(coor.axis_show, f)
 
     def screenshot():
         pygame.image.save(display, SS_PATH)
@@ -137,18 +139,23 @@ class Coordinate:
         self.origin = [display_width / 2 + 150, display_height / 2]
         self.scalex = 50
         self.scaley = 50
+        self.axis_show = True
 
     def axis(self):
-        pygame.draw.line(display,
-                         RED,
-                         (0, self.origin[1]),
-                         (display_width, self.origin[1]),
-                         Coordinate._stroke_width)
-        pygame.draw.line(display,
-                         RED,
-                         (self.origin[0], 0),
-                         (self.origin[0], display_height),
-                         Coordinate._stroke_width)
+        if self.axis_show:
+            pygame.draw.line(display,
+                             RED,
+                             (0, self.origin[1]),
+                             (display_width, self.origin[1]),
+                             Coordinate._stroke_width)
+            pygame.draw.line(display,
+                             RED,
+                             (self.origin[0], 0),
+                             (self.origin[0], display_height),
+                             Coordinate._stroke_width)
+
+    def grid(self):
+        pass
 
     def chori(self, move_x, move_y):
         self.origin[0] += move_x
@@ -174,7 +181,8 @@ class Func:
             Func.family.append(self)
             Func.set_act(len(Func.family) - 1)
         else:
-            message.put_delayed(display, "Number of Function reached maximum")
+            message.put_delayed(display,
+                                "Number of expression reached maximum")
 
     def set_act(index):
         if not tab.visible:
@@ -204,7 +212,7 @@ class Func:
             else:
                 Func.set_act(index)
         else:
-            message.put_delayed(display, "No Function to remove")
+            message.put_delayed(display, "No graph expression to remove")
 
     def move_cursor(self, move):
         if not tab.visible:
@@ -318,13 +326,13 @@ class Func:
 
         # display Function status
         if not self.visible:
-            msg = "the Function is set to invisible"
+            msg = "the graph is set to invisible"
         elif not self.drawability:
-            msg = "the Function is not drawable"
+            msg = "the graph is not drawable"
         elif self.drawability != display_width:
-            msg = "the Function is not consistent"
+            msg = "the graph is not consistent"
         else:
-            msg = "the Function is consistent in view"
+            msg = "the graph is consistent in view"
         message.indent()
         message.put(display, msg)
         message.unindent()
@@ -355,7 +363,7 @@ class Tab:
         coor.chori((w - old_w) / 2, (h - old_h) / 2)
 
 
-data = File("data")
+data = File("data.p")
 message = Message()
 coor = Coordinate()
 tab = Tab()
@@ -365,7 +373,7 @@ def main():
     global display_width, display_height, shortcuts
 
     data.get()
-    with open("shortcuts", 'r') as f:
+    with open("shortcuts.txt", 'r') as f:
         shortcuts = [line.replace('\n', '') for line in f.readlines()]
 
     while True:
@@ -421,6 +429,8 @@ def main():
                             coor.chori(150, 0)
                         else:
                             coor.chori(-150, 0)
+                    elif event.key == K_a:
+                        coor.axis_show = not coor.axis_show
                     elif event.key == K_c:
                         if not tab.visible:
                             message.put_delayed(display,
@@ -575,7 +585,7 @@ def error(e_name):
         clock.tick(FPS)
 
 
-try:
-    main()
-except Exception as e:
-    error(e.__class__.__name__)
+# try:
+main()
+# except Exception as e:
+#     error(e.__class__.__name__)
