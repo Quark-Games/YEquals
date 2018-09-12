@@ -35,7 +35,7 @@ LIGHT_BLUE = (153, 204, 255)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]"
-COE_PAIR = r"[0-9|\)|x]x"
+COE_PAIR = r"[0-9|\)|x][x|\(]"
 
 ALTS = ((K_v, '√'),
         (K_p, 'π'),
@@ -67,12 +67,20 @@ class File:
         try:
             with open(self.fname, 'rb') as f:
                 Func.family = pickle.load(f)
+                coor.origin = pickle.load(f)
+                coor.scalex = pickle.load(f)
+                coor.scaley = pickle.load(f)
+            if Func.family:
+                Func.active = Func.family[Func._act_index]
         except Exception as e:
-            message.put_delayed("Error occur while loading data")
+            message.put_delayed(display, "Error occur while loading data")
 
     def put(self):
         with open(self.fname, 'wb') as f:
             pickle.dump(Func.family, f)
+            pickle.dump(coor.origin, f)
+            pickle.dump(coor.scalex, f)
+            pickle.dump(coor.scaley, f)
 
     def screenshot():
         pygame.image.save(display, SS_PATH)
@@ -148,7 +156,7 @@ class Func:
     limit = 8
     family = []
     active = None
-    _act_index = -1
+    _act_index = 0
     _accuracy = 1
     _stroke_width = 2
 
@@ -286,9 +294,9 @@ class Func:
                     pygame.draw.line(display,
                                      BLACK,
                                      old_pos,
-                                     (int(pixel_x), int(pixel_y)),
+                                     (round(pixel_x), round(pixel_y)),
                                      Func._stroke_width)
-                old_pos = (int(pixel_x), int(pixel_y))
+                old_pos = (round(pixel_x), round(pixel_y))
             except Exception:
                 drawability -= 1
         self.drawability = drawability
@@ -330,6 +338,8 @@ class Tab:
 
     def resize_win(self, w, h):
         global display_width, display_height
+        old_size = display.get_rect()
+        old_w, old_h = old_size.right, old_size.bottom
         if w < 800:
             w = 800
             message.put_delayed(display, "minimal window width is 800")
@@ -338,6 +348,7 @@ class Tab:
             message.put_delayed(display, "minimal window height is 600")
         display_width, display_height = w, h
         pygame.display.set_mode((w, h), RESIZABLE)
+        coor.chori((w - old_w) / 2, (h - old_h) / 2)
 
 
 data = File("data")
@@ -541,17 +552,18 @@ def error(e_name):
     message.put(display, "Error")
     message.indent()
     message.put(display, "Encoutered error name: " + e_name)
+    message.put(display, "Press any key to exit...")
     display.blit(logo_img, (display_width - 45, 10))
     pygame.display.flip()
 
     show = True
     while show:
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == QUIT or event.type == KEYDOWN:
                 quit_all(False)
         clock.tick(FPS)
 
-try:
-    main()
-except Exception as e:
-    error(e.__name__)
+# try:
+main()
+# except Exception as e:
+#     error(e.__class__.__name__)
