@@ -68,7 +68,7 @@ class File:
             with open(self.fname, 'rb') as f:
                 Func.family = pickle.load(f)
         except Exception as e:
-            message.put_delayed("Error occur while loading data")
+            message.put_delayed("Error occurd while loading data")
 
     def put(self):
         with open(self.fname, 'wb') as f:
