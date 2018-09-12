@@ -162,7 +162,7 @@ class Func:
 
     def __init__(self, exp):
         if not tab.visible:
-            message.put_delayed(display, "function tab not active")
+            message.put_delayed(display, "Function tab not active")
             return
         if len(Func.family) < Func.limit:
             self.exp = exp
@@ -171,11 +171,11 @@ class Func:
             Func.family.append(self)
             Func.set_act(len(Func.family) - 1)
         else:
-            message.put_delayed(display, "Number of function reached maximum")
+            message.put_delayed(display, "Number of Function reached maximum")
 
     def set_act(index):
         if not tab.visible:
-            message.put_delayed(display, "function tab not active")
+            message.put_delayed(display, "Function tab not active")
             return
         if index == 'u':
             if Func._act_index > 0:
@@ -191,7 +191,7 @@ class Func:
 
     def remove():
         if not tab.visible:
-            message.put_delayed(display, "function tab not active")
+            message.put_delayed(display, "Function tab not active")
             return
         if Func.family:
             index = Func.family.index(Func.active)
@@ -201,11 +201,11 @@ class Func:
             else:
                 Func.set_act(index)
         else:
-            message.put_delayed(display, "No function to remove")
+            message.put_delayed(display, "No Function to remove")
 
     def move_cursor(self, move):
         if not tab.visible:
-            message.put_delayed(display, "function tab not active")
+            message.put_delayed(display, "Function tab not active")
             return
         if move == -1:
             if self.cursor > 0:
@@ -222,14 +222,14 @@ class Func:
 
     def insert(self, string):
         if not tab.visible:
-            message.put_delayed(display, "function tab not active")
+            message.put_delayed(display, "Function tab not active")
             return
         self.exp = self.exp[0:self.cursor] + string + self.exp[self.cursor:]
         self.cursor += len(string)
 
     def delete(self):
         if not tab.visible:
-            message.put_delayed(display, "function tab not active")
+            message.put_delayed(display, "Function tab not active")
             return
         if self.exp:
             self.exp = self.exp[:self.cursor-1] + self.exp[self.cursor:]
@@ -278,7 +278,7 @@ class Func:
                     message.unindent()
 
     def graph(self, exp, domain="True"):
-        # draw graph of function
+        # draw graph of Function
         old_pos = (-1, -1)
         drawability = display_width
         for raw_x in range(-1, display_width * Func._accuracy):
@@ -302,7 +302,7 @@ class Func:
         self.drawability = drawability
 
     def show(self):
-        # display function expression
+        # display Function expression
         if pygame.key.get_pressed()[K_TAB]:
             message.put(display, "y = " + str(self.true_exp()))
         else:
@@ -313,15 +313,15 @@ class Func:
             else:
                 message.put(display, "y = " + self.exp)
 
-        # display function status
+        # display Function status
         if not self.visible:
-            msg = "the function is set to invisible"
+            msg = "the Function is set to invisible"
         elif not self.drawability:
-            msg = "the function is not drawable"
+            msg = "the Function is not drawable"
         elif self.drawability != display_width:
-            msg = "the function is not consistent"
+            msg = "the Function is not consistent"
         else:
-            msg = "the function is consistent in view"
+            msg = "the Function is consistent in view"
         message.indent()
         message.put(display, msg)
         message.unindent()
@@ -419,12 +419,12 @@ def main():
                             coor.chori(-150, 0)
                     elif event.key == K_c:
                         if not tab.visible:
-                            message.put_delayed(display, "function tab not active")
+                            message.put_delayed(display, "Function tab not active")
                         else:
                             pyperclip.copy(func.exp)
                     elif event.key == K_v:
                         if not tab.visible:
-                            message.put_delayed(display, "function tab not active")
+                            message.put_delayed(display, "Function tab not active")
                         else:
                             func.exp = pyperclip.paste()
                             func.move_cursor(2)
@@ -563,7 +563,7 @@ def error(e_name):
                 quit_all(False)
         clock.tick(FPS)
 
-# try:
-main()
-# except Exception as e:
-#     error(e.__class__.__name__)
+try:
+    main()
+except Exception as e:
+    error(e.__class__.__name__)
