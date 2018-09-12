@@ -34,6 +34,7 @@ logo_img = pygame.image.load("quarkgame_logo.png")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+GREY = (230, 230, 230)
 LIGHT_BLUE = (153, 204, 255)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
@@ -60,6 +61,7 @@ SWITCH = (('√', "sqrt"),
           ('=', "=="),
           ('≠', "!="))
 
+sig_figure = lambda x, fig: round(x, fig - int(floor(log10(abs(x)))) - 1)
 
 class File:
 
@@ -74,6 +76,7 @@ class File:
                 coor.scalex = pickle.load(f)
                 coor.scaley = pickle.load(f)
                 coor.axis_show = pickle.load(f)
+                coor.grid_show = pickle.load(f)
             if Func.family:
                 Func.active = Func.family[Func._act_index]
         except Exception as e:
@@ -86,6 +89,7 @@ class File:
             pickle.dump(coor.scalex, f)
             pickle.dump(coor.scaley, f)
             pickle.dump(coor.axis_show, f)
+            pickle.dump(coor.grid_show, f)
 
     def screenshot():
         pygame.image.save(display, SS_PATH)
@@ -98,6 +102,11 @@ class Message:
     def __init__(self):
         self.reset()
         self.font = pygame.font.Font(None, 21)
+
+    def label(self, x, y, textString, color=BLACK):
+        textString = str(textString)
+        textBitmap = self.font.render(textString, True, color)
+        display.blit(textBitmap, [x + 1, y + 1])
 
     def put(self, screen, textString, color=BLACK):
         textBitmap = self.font.render(textString, True, color)
@@ -140,6 +149,7 @@ class Coordinate:
         self.scalex = 50
         self.scaley = 50
         self.axis_show = True
+        self.grid_show = True
 
     def axis(self):
         if self.axis_show:
@@ -155,7 +165,30 @@ class Coordinate:
                              Coordinate._stroke_width)
 
     def grid(self):
-        pass
+        if not self.grid_show:
+            return
+        ori_x, ori_y = map(int, coor.origin)
+        gap_x, gap_y = 50 / coor.scalex, 50 / coor.scaley
+        gap_x = sig_figure(gap_x, 2)
+        gap_y = sig_figure(gap_y, 2)
+        gap_px = int(gap_x * coor.scalex)
+        gap_py = int(gap_y * coor.scaley)
+        for line_x in range(ori_x % gap_px, display_width, gap_px):
+            pygame.draw.line(display,
+                             GREY,
+                             (line_x, 0),
+                             (line_x, display_height),
+                             Coordinate._stroke_width)
+            val = (line_x - ori_x) / coor.scalex
+            message.label(line_x, ori_y, val)
+        for line_y in range(ori_y % gap_py, display_height, gap_py):
+            pygame.draw.line(display,
+                             GREY,
+                             (0, line_y),
+                             (display_width, line_y),
+                             Coordinate._stroke_width)
+            val = (ori_y - line_y) / coor.scaley
+            message.label(ori_x, line_y, val)
 
     def chori(self, move_x, move_y):
         self.origin[0] += move_x
@@ -389,8 +422,15 @@ def main():
                 quit_all()
             mods = pygame.key.get_mods()
             if event.type == KEYDOWN:
-                # special operations
-                if mods & KMOD_META:
+                # keyboard operations with modifiers
+                if mods & KMOD_META and mods & KMOD_SHIFT:
+                    if event.key == K_MINUS:
+                        coor.scalex /= 1.2
+                        coor.scaley /= 1.2
+                    elif event.key == K_EQUALS:
+                        coor.scalex *= 1.2
+                        coor.scaley *= 1.2
+                elif mods & KMOD_META:
                     if event.key == K_q:
                         quit_all()
                     elif event.key == K_m:
@@ -431,6 +471,8 @@ def main():
                             coor.chori(-150, 0)
                     elif event.key == K_a:
                         coor.axis_show = not coor.axis_show
+                    elif event.key == K_g:
+                        coor.grid_show = not coor.grid_show
                     elif event.key == K_c:
                         if not tab.visible:
                             message.put_delayed(display,
@@ -494,7 +536,7 @@ def main():
             coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
-            coor.scalex *= 1 + mouse_move[0] / 100
+            coor.scalex *= 1 + mouse_move[0] / -100
             coor.scaley *= 1 + mouse_move[1] / -100
         else:
             if corner.collidepoint(mouse_pos):
@@ -506,6 +548,7 @@ def main():
         # display
         display.fill(WHITE)
 
+        coor.grid()
         coor.axis()
 
         for func in Func.family:
