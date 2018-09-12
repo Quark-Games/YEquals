@@ -6,6 +6,9 @@ import re
 import pickle
 import pyperclip
 
+CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018",
+           "Group member Michael Wang and Jeff Sui assisted with this project"]
+
 # set default directory to assets
 os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
 
@@ -326,6 +329,7 @@ class Func:
         message.put(display, msg)
         message.unindent()
 
+
 class Tab:
     def __init__(self):
         self.visible = True
@@ -362,7 +366,7 @@ def main():
 
     data.get()
     with open("shortcuts", 'r') as f:
-        shortcuts = [line.replace('\n','') for line in f.readlines()]
+        shortcuts = [line.replace('\n', '') for line in f.readlines()]
 
     while True:
 
@@ -419,12 +423,14 @@ def main():
                             coor.chori(-150, 0)
                     elif event.key == K_c:
                         if not tab.visible:
-                            message.put_delayed(display, "Function tab not active")
+                            message.put_delayed(display,
+                                                "Function tab not active")
                         else:
                             pyperclip.copy(func.exp)
                     elif event.key == K_v:
                         if not tab.visible:
-                            message.put_delayed(display, "Function tab not active")
+                            message.put_delayed(display,
+                                                "Function tab not active")
                         else:
                             func.exp = pyperclip.paste()
                             func.move_cursor(2)
@@ -519,6 +525,11 @@ def show_shortcuts():
     message.indent()
     for shortcut in shortcuts:
         message.put(display, shortcut)
+    message.unindent()
+    message.put(display, "Credits")
+    message.indent()
+    for line in CREDITS:
+        message.put(display, line)
     display.blit(logo_img, (display_width - 45, 10))
     pygame.display.flip()
 
@@ -562,6 +573,7 @@ def error(e_name):
             if event.type == QUIT or event.type == KEYDOWN:
                 quit_all(False)
         clock.tick(FPS)
+
 
 try:
     main()
