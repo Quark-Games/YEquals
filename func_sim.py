@@ -2,9 +2,9 @@ import pygame
 from pygame.locals import *
 from math import *
 import os
-import re
 import pickle
 import pyperclip
+import re
 
 CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018.",
            "Pygame is used as the major GUI framework."]
@@ -26,8 +26,6 @@ icon_img = pygame.image.load("icon.png")
 pygame.display.set_icon(icon_img)
 
 clock = pygame.time.Clock()
-FPS = 60
-
 font = pygame.font.Font(None, 20)
 logo_img = pygame.image.load("quarkgame_logo.png")
 
@@ -35,11 +33,19 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREY = (230, 230, 230)
+DARK_GREY = (120, 120, 120)
 LIGHT_BLUE = (153, 204, 255)
+
+FPS = 30
+SCALE_DX = 80
+SCALE_DY = 80
+SCALE_RATIO = 1.2
+CORNER = pygame.Rect(display_width - 45, 0, 45, 36)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]\s*$"
 COE_PAIR = r"[0-9|\)|x][x|\(]"
+PARENTHESIS = {'(' : ')', '[' : ']'}
 
 ALTS = ((K_v, '√'),
         (K_p, 'π'),
@@ -102,10 +108,21 @@ class Message:
     def __init__(self):
         self.reset()
         self.font = pygame.font.Font(None, 21)
+        self.label_font = pygame.font.Font(None, 19)
 
-    def label(self, x, y, textString, color=BLACK):
+    def label(self, x, y, textString, color=DARK_GREY):
         textString = str(textString)
-        textBitmap = self.font.render(textString, True, color)
+        textBitmap = self.label_font.render(textString, True, color)
+        textRect = textBitmap.get_rect()
+        left_most = Tab.width if tab.visible else 0
+        if x > display_width - textRect.width:
+            x = display_width - textRect.width
+        elif x < left_most:
+            x = left_most
+        if y > display_height - textRect.height:
+            y = display_height - textRect.height
+        elif y < 0:
+            y = 0
         display.blit(textBitmap, [x + 1, y + 1])
 
     def put(self, screen, textString, color=BLACK):
@@ -145,9 +162,9 @@ class Coordinate:
     _stroke_width = 2
 
     def __init__(self):
-        self.origin = [display_width / 2 + 150, display_height / 2]
-        self.scalex = 25
-        self.scaley = 25
+        self.origin = [display_width / 2 + Tab.width / 2, display_height / 2]
+        self.scalex = SCALE_DX
+        self.scaley = SCALE_DY
         self.axis_show = True
         self.grid_show = True
 
@@ -167,13 +184,21 @@ class Coordinate:
     def grid(self):
         if not self.grid_show:
             return
+
+        # initiate value
         ori_x, ori_y = map(int, coor.origin)
-        gap_x, gap_y = 80 / coor.scalex, 80 / coor.scaley
+        gap_x, gap_y = SCALE_DX / coor.scalex, SCALE_DY / coor.scaley
         gap_x = sig_figure(gap_x, 2)
         gap_y = sig_figure(gap_y, 2)
         gap_px = int(gap_x * coor.scalex)
         gap_py = int(gap_y * coor.scaley)
-        for line_x in range(ori_x % gap_px, display_width, gap_px):
+        label_x, label_y = map(int, coor.origin)
+        left_lim = Tab.width if tab.visible else 0
+
+        # draw grid
+        for line_x in range((ori_x - left_lim) % gap_px + left_lim,
+                            display_width,
+                            gap_px):
             pygame.draw.line(display,
                              GREY,
                              (line_x, 0),
@@ -182,7 +207,7 @@ class Coordinate:
             val = (line_x - ori_x) / coor.scalex
             if val != 0:
                 val = sig_figure(val, 2)
-                message.label(line_x, ori_y, val)
+                message.label(line_x, label_y, val)
         for line_y in range(ori_y % gap_py, display_height, gap_py):
             pygame.draw.line(display,
                              GREY,
@@ -192,7 +217,7 @@ class Coordinate:
             val = (ori_y - line_y) / coor.scaley
             if val != 0:
                 val = sig_figure(val, 2)
-                message.label(ori_x, line_y, val)
+                message.label(label_x, line_y, val)
 
     def chori(self, move_x, move_y):
         self.origin[0] += move_x
@@ -268,12 +293,15 @@ class Func:
             if self.cursor < len(self.exp):
                 self.cursor = len(self.exp)
 
-    def insert(self, string):
+    def insert(self, char):
         if not tab.visible:
             message.put_delayed(display, "Function tab not active")
             return
-        self.exp = self.exp[0:self.cursor] + string + self.exp[self.cursor:]
-        self.cursor += len(string)
+        self.exp = self.exp[0:self.cursor] + char + self.exp[self.cursor:]
+        self.cursor += len(char)
+        if char in PARENTHESIS:
+            close = PARENTHESIS[char]
+            self.exp = self.exp[0:self.cursor] + close + self.exp[self.cursor:]
 
     def delete(self):
         if not tab.visible:
@@ -376,12 +404,16 @@ class Func:
 
 
 class Tab:
+    width = 300
+
     def __init__(self):
         self.visible = True
 
     def func_tab(self):
         if self.visible:
-            pygame.draw.rect(display, LIGHT_BLUE, (0, 0, 300, display_height))
+            pygame.draw.rect(display,
+                             LIGHT_BLUE,
+                             (0, 0, Tab.width, display_height))
             for func in Func.family:
                 func.show()
 
@@ -418,7 +450,7 @@ def main():
         # reset
         message.reset()
         func = Func.active
-        corner = pygame.Rect(display_width - 45, 0, 45, 36)
+        corner = CORNER
 
         # keyboard controls
         for event in pygame.event.get():
@@ -429,11 +461,11 @@ def main():
                 # keyboard operations with modifiers
                 if mods & KMOD_META and mods & KMOD_SHIFT:
                     if event.key == K_MINUS:
-                        coor.scalex /= 1.2
-                        coor.scaley /= 1.2
+                        coor.scalex /= SCALE_RATIO
+                        coor.scaley /= SCALE_RATIO
                     elif event.key == K_EQUALS:
-                        coor.scalex *= 1.2
-                        coor.scaley *= 1.2
+                        coor.scalex *= SCALE_RATIO
+                        coor.scaley *= SCALE_RATIO
                 elif mods & KMOD_META:
                     if event.key == K_q:
                         quit_all()
@@ -449,17 +481,17 @@ def main():
                         coor.scaley *= 2
                     elif event.key == K_0:
                         if tab.visible:
-                            coor.origin = [display_width / 2 + 150,
+                            coor.origin = [display_width / 2 + Tab.width / 2,
                                            display_height / 2]
                         else:
                             coor.origin = [display_width/2, display_height/2]
-                        coor.scalex, coor.scaley = 80, 80
+                        coor.scalex, coor.scaley = SCALE_DX, SCALE_DY
                     elif event.key == K_9:
                         ave = (coor.scalex + coor.scaley) / 2
                         coor.scalex, coor.scaley = ave, ave
                     elif event.key == K_8:
                         if tab.visible:
-                            coor.origin = [display_width / 2 + 150,
+                            coor.origin = [display_width / 2 + Tab.width / 2,
                                            display_height / 2]
                         else:
                             coor.origin = [display_width/2, display_height/2]
@@ -470,9 +502,9 @@ def main():
                     elif event.key == K_f:
                         tab.visible = not tab.visible
                         if tab.visible:
-                            coor.chori(150, 0)
+                            coor.chori(Tab.width / 2, 0)
                         else:
-                            coor.chori(-150, 0)
+                            coor.chori(-Tab.width / 2, 0)
                     elif event.key == K_a:
                         coor.axis_show = not coor.axis_show
                     elif event.key == K_g:
@@ -525,11 +557,11 @@ def main():
             elif event.type == MOUSEBUTTONDOWN:
                 if mods & KMOD_SHIFT:
                     if event.button == 4:
-                        coor.scalex /= 1.2
-                        coor.scaley /= 1.2
+                        coor.scalex /= SCALE_RATIO
+                        coor.scaley /= SCALE_RATIO
                     elif event.button == 5:
-                        coor.scalex *= 1.2
-                        coor.scaley *= 1.2
+                        coor.scalex *= SCALE_RATIO
+                        coor.scaley *= SCALE_RATIO
             elif event.type == VIDEORESIZE:
                 tab.resize_win(event.w, event.h)
 
@@ -540,8 +572,8 @@ def main():
             coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
-            coor.scalex *= 1 + mouse_move[0] / -100
-            coor.scaley *= 1 + mouse_move[1] / -100
+            coor.scalex += mouse_move[0] / 10
+            coor.scaley += mouse_move[1] / 10
         else:
             if corner.collidepoint(mouse_pos):
                 show_shortcuts()
@@ -600,7 +632,7 @@ def show_shortcuts():
             if event.type == VIDEORESIZE:
                 tab.resize_win(event.w, event.h)
         mouse_pos = pygame.mouse.get_pos()
-        corner = pygame.Rect(display_width - 45, 0, 45, 46)
+        corner = pygame.Rect(display_width - 45, 0, 45, 36)
         if not corner.collidepoint(mouse_pos):
             show = not show
         clock.tick(FPS)
@@ -617,9 +649,9 @@ def quit_all(save=True):
 def error(e_name):
     display.fill(WHITE)
     message.reset()
-    message.put(display, "Error")
+    message.put(display, "Enconted Error")
     message.indent()
-    message.put(display, "Encoutered error name: " + e_name)
+    message.put(display, "Error name: " + e_name)
     message.put(display, "Press any key to exit...")
     display.blit(logo_img, (display_width - 45, 10))
     pygame.display.flip()
