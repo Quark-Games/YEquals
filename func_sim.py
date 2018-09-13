@@ -40,12 +40,11 @@ FPS = 30
 SCALE_DX = 80
 SCALE_DY = 80
 SCALE_RATIO = 1.2
-CORNER = pygame.Rect(display_width - 45, 0, 45, 36)
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]\s*$"
 COE_PAIR = r"[0-9|\)|x][x|\(]"
-PARENTHESIS = {'(' : ')', '[' : ']'}
+PARENTHESIS = {'(': ')', '[': ']'}
 
 ALTS = ((K_v, '√'),
         (K_p, 'π'),
@@ -67,7 +66,6 @@ SWITCH = (('√', "sqrt"),
           ('=', "=="),
           ('≠', "!="))
 
-sig_figure = lambda x, fig: round(x, fig - int(floor(log10(abs(x)))) - 1)
 
 class File:
 
@@ -115,14 +113,14 @@ class Message:
         textBitmap = self.label_font.render(textString, True, color)
         textRect = textBitmap.get_rect()
         left_most = Tab.width if tab.visible else 0
-        if x > display_width - textRect.width:
-            x = display_width - textRect.width
-        elif x < left_most:
+        if x < left_most:
             x = left_most
-        if y > display_height - textRect.height:
-            y = display_height - textRect.height
-        elif y < 0:
+        elif x > display_width - textRect.width:
+            x = display_width - textRect.width
+        if y < 0:
             y = 0
+        elif y > display_height - textRect.height:
+            y = display_height - textRect.height
         display.blit(textBitmap, [x + 1, y + 1])
 
     def put(self, screen, textString, color=BLACK):
@@ -163,10 +161,36 @@ class Coordinate:
 
     def __init__(self):
         self.origin = [display_width / 2 + Tab.width / 2, display_height / 2]
-        self.scalex = SCALE_DX
-        self.scaley = SCALE_DY
+        self._scalex = SCALE_DX
+        self._scaley = SCALE_DY
         self.axis_show = True
         self.grid_show = True
+
+    @property
+    def scalex(self):
+        return self._scalex
+
+    @scalex.setter
+    def scalex(self, value):
+        old_scalex = self._scalex
+        mouse_x = pygame.mouse.get_pos()[0]
+        coor.chori((self.origin[0]-mouse_x)/old_scalex*(value-old_scalex), 0)
+        self._scalex = value
+
+    @property
+    def scaley(self):
+        return self._scaley
+
+    @scaley.setter
+    def scaley(self, value):
+        old_scaley = self._scaley
+        mouse_y = pygame.mouse.get_pos()[1]
+        coor.chori(0, (self.origin[1]-mouse_y)/old_scaley*(value-old_scaley))
+        self._scaley = value
+
+    def chori(self, move_x, move_y):
+        self.origin[0] += move_x
+        self.origin[1] += move_y
 
     def axis(self):
         if self.axis_show:
@@ -219,10 +243,6 @@ class Coordinate:
                 val = sig_figure(val, 2)
                 message.label(label_x, line_y, val)
 
-    def chori(self, move_x, move_y):
-        self.origin[0] += move_x
-        self.origin[1] += move_y
-
 
 class Func:
     limit = 8
@@ -253,11 +273,11 @@ class Func:
         if index == 'u':
             if Func._act_index > 0:
                 Func._act_index -= 1
-            Func.active = Func.family[Func._act_index]
+                Func.active = Func.family[Func._act_index]
         elif index == 'd':
             if Func._act_index < len(Func.family) - 1:
                 Func._act_index += 1
-            Func.active = Func.family[Func._act_index]
+                Func.active = Func.family[Func._act_index]
         elif Func.family:
             Func.active = Func.family[index]
             Func._act_index = index
@@ -438,6 +458,10 @@ coor = Coordinate()
 tab = Tab()
 
 
+def sig_figure(x, fig):
+    return round(x, fig - int(floor(log10(abs(x)))) - 1)
+
+
 def main():
     global display_width, display_height, shortcuts
 
@@ -450,7 +474,7 @@ def main():
         # reset
         message.reset()
         func = Func.active
-        corner = CORNER
+        corner = pygame.Rect(display_width - 45, 0, 45, 36)
 
         # keyboard controls
         for event in pygame.event.get():
@@ -480,12 +504,12 @@ def main():
                         coor.scalex *= 2
                         coor.scaley *= 2
                     elif event.key == K_0:
+                        coor.scalex, coor.scaley = SCALE_DX, SCALE_DY
                         if tab.visible:
                             coor.origin = [display_width / 2 + Tab.width / 2,
                                            display_height / 2]
                         else:
                             coor.origin = [display_width/2, display_height/2]
-                        coor.scalex, coor.scaley = SCALE_DX, SCALE_DY
                     elif event.key == K_9:
                         ave = (coor.scalex + coor.scaley) / 2
                         coor.scalex, coor.scaley = ave, ave
@@ -572,7 +596,7 @@ def main():
             coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
-            coor.scalex *= 1 + mouse_move[0] / display_width
+            coor.scalex *= 1 + mouse_move[0] / -display_width
             coor.scaley *= 1 + mouse_move[1] / display_height
         else:
             if corner.collidepoint(mouse_pos):
@@ -639,13 +663,6 @@ def show_shortcuts():
     message.reset()
 
 
-def quit_all(save=True):
-    if save:
-        data.put()
-    pygame.quit()
-    quit()
-
-
 def error(e_name):
     display.fill(WHITE)
     message.reset()
@@ -662,6 +679,13 @@ def error(e_name):
             if event.type == QUIT or event.type == KEYDOWN:
                 quit_all(False)
         clock.tick(FPS)
+
+
+def quit_all(save=True):
+    if save:
+        data.put()
+    pygame.quit()
+    quit()
 
 
 # try:
