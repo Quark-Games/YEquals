@@ -236,6 +236,8 @@ class Coordinate:
             if val != 0:
                 val = sig_figure(val, 2)
                 message.label(line_x, label_y, val)
+            else:
+                message.label(line_x, label_y, 0)
         for line_y in range(ori_y % gap_py, display_height, gap_py):
             pygame.draw.line(display,
                              GREY,
@@ -598,8 +600,10 @@ def main():
         # mouse control
         mouse_press = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
-        if mouse_press[0]:
+        if mods & KMOD_CTRL:
             coor.chori(*pygame.mouse.get_rel())
+        elif mouse_press[0]:
+                coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
             coor.scalex *= 1 + mouse_move[0] / -display_width

@@ -1,7 +1,7 @@
 >>> General <<<
   Command & F - show/hide function tab
   Command & A - show/hide axis tab
-  Command & A - show/hide grid system (grid function in beta)
+  Command & G - show/hide grid system (grid function in beta)
   Command & S - save screenshot
   Command & M - minimise window
   Command & Q - quit
@@ -11,9 +11,10 @@
   Command & 0 - go back to default scale and origin
   Command & 9 - equalise the scale x and scale y
   Command & 8 - go back to origin
-  Shift & Middle mouse scroll - scale x and y
-  Mouse left & drag - move origin
-  Mouse right & drag - adjust scale x and y according to movement
+  Shift & (middle mouse) scroll - scale x and y
+  Control & mouse drag - move origin
+  Mouse left click & drag - move origin
+  Mouse right click & drag - adjust scale x and y according to movement
 >>> Function tab <<<
   Command & Backspace - remove function
   Command & Enter - add a new function
