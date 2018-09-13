@@ -572,8 +572,8 @@ def main():
             coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
-            coor.scalex += mouse_move[0] / 10
-            coor.scaley += mouse_move[1] / 10
+            coor.scalex *= 1 + mouse_move[0] / display_width
+            coor.scaley *= 1 + mouse_move[1] / display_height
         else:
             if corner.collidepoint(mouse_pos):
                 show_shortcuts()
