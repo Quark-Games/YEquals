@@ -1,16 +1,18 @@
 import pygame
 from pygame.locals import *
+import logging
 from math import *
 import os
 import pickle
 import pyperclip
 import re
 
+
+# preparation
+os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
+logger = logging.getLogger(__name__)
 CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018.",
            "Pygame is used as the major GUI framework."]
-
-# set default directory to assets
-os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
 
 # pygame display initiation
 pygame.init()
@@ -76,9 +78,9 @@ class File:
         try:
             with open(self.fname, 'rb') as f:
                 Func.family = pickle.load(f)
-                coor.origin = pickle.load(f)
                 coor.scalex = pickle.load(f)
                 coor.scaley = pickle.load(f)
+                coor.origin = pickle.load(f)
                 coor.axis_show = pickle.load(f)
                 coor.grid_show = pickle.load(f)
             if Func.family:
@@ -89,9 +91,9 @@ class File:
     def put(self):
         with open(self.fname, 'wb') as f:
             pickle.dump(Func.family, f)
-            pickle.dump(coor.origin, f)
             pickle.dump(coor.scalex, f)
             pickle.dump(coor.scaley, f)
+            pickle.dump(coor.origin, f)
             pickle.dump(coor.axis_show, f)
             pickle.dump(coor.grid_show, f)
 
@@ -135,7 +137,7 @@ class Message:
         if len(Message.delay_msg) >= Message.limit:
             del Message.delay_msg[:-5]
         if len(Message.delay_msg) != 0:
-            self.put(display, "information")
+            self.put(display, "Information")
             self.indent()
             for msg in Message.delay_msg:
                 self.put(msg[0], msg[1])
@@ -265,8 +267,7 @@ class Func:
             Func.family.append(self)
             Func.set_act(len(Func.family) - 1)
         else:
-            message.put_delayed(display,
-                                "Number of expression reached maximum")
+            message.put_delayed(display, "Maximum graph exceeded")
 
     def set_act(index):
         if not tab.visible:
@@ -318,6 +319,9 @@ class Func:
     def insert(self, char):
         if not tab.visible:
             message.put_delayed(display, "Function tab not active")
+            return
+        if len(self.exp) > 25:
+            message.put_delayed(display, "Expression too long")
             return
         self.exp = self.exp[0:self.cursor] + char + self.exp[self.cursor:]
         self.cursor += len(char)
@@ -693,4 +697,5 @@ def quit_all(save=True):
 try:
     main()
 except Exception as e:
+    logger.error("Error occured during run-time!", exc_info=True)
     error(e.__class__.__name__)
