@@ -154,6 +154,8 @@ class Message:
 
     def unindent(self):
         self.x -= 15
+        pygame.draw.line(display, DARK_GREY, (0, self.y), (Tab.width, self.y))
+        self.y += 2
 
 
 class Coordinate:
@@ -688,7 +690,7 @@ def quit_all(save=True):
     quit()
 
 
-# try:
-main()
-# except Exception as e:
-#     error(e.__class__.__name__)
+try:
+    main()
+except Exception as e:
+    error(e.__class__.__name__)
