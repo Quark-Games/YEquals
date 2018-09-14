@@ -12,7 +12,7 @@ import re
 os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
 logger = logging.getLogger(__name__)
 CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018.",
-           "Michael Wang assists me with this project.",
+           "Michael Wang assists me with this project.", # Present tense?
            "Pygame is used as the major GUI framework."]
 
 # pygame display initiation
