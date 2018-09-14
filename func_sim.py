@@ -38,6 +38,11 @@ RED = (255, 0, 0)
 GREY = (230, 230, 230)
 DARK_GREY = (120, 120, 120)
 LIGHT_BLUE = (153, 204, 255)
+LIGHT_GREEN = (179, 255, 179)
+LIGHT_YELLOW = (255, 255, 153)
+FUNC_TAB = 1
+VIEW_TAB = 2
+VAR_TAB = 3
 
 FPS = 30
 SCALE_DX = 80
@@ -447,15 +452,45 @@ class Tab:
     width = 300
 
     def __init__(self):
-        self.visible = True
+        self._visible = True
+
+    @property
+    def visible(self):
+        return self._visible
+
+    @visible.setter
+    def visible(self, value):
+        temp = self._visible
+        self._visible = value
+        if not tab._visible:
+            coor.chori(-Tab.width / 2, 0)
+        elif not temp:
+            coor.chori(Tab.width / 2, 0)
+
+    def show_tab(self):
+        if tab.visible == FUNC_TAB:
+            self.func_tab()
+        elif tab.visible == VIEW_TAB:
+            self.view_tab()
+        elif tab.visible == VAR_TAB:
+            self.var_tab()
 
     def func_tab(self):
-        if self.visible:
-            pygame.draw.rect(display,
-                             LIGHT_BLUE,
-                             (0, 0, Tab.width, display_height))
-            for func in Func.family:
-                func.show()
+        pygame.draw.rect(display,
+                         LIGHT_BLUE,
+                         (0, 0, Tab.width, display_height))
+        for func in Func.family:
+            func.show()
+
+    def view_tab(self):
+        pygame.draw.rect(display,
+                         LIGHT_GREEN,
+                         (0, 0, Tab.width, display_height))
+
+    def var_tab(self):
+        pygame.draw.rect(display,
+                         LIGHT_YELLOW,
+                         (0, 0, Tab.width, display_height))
 
     def resize_win(self, w, h):
         global display_width, display_height
@@ -543,12 +578,21 @@ def main():
                         Func.remove()
                     elif event.key == K_RETURN:
                         Func('')
-                    elif event.key == K_f:
-                        tab.visible = not tab.visible
-                        if tab.visible:
-                            coor.chori(Tab.width / 2, 0)
+                    elif event.key == K_1:
+                        if tab.visible == FUNC_TAB:
+                            tab.visible = None
                         else:
-                            coor.chori(-Tab.width / 2, 0)
+                            tab.visible = FUNC_TAB
+                    elif event.key == K_2:
+                        if tab.visible == VIEW_TAB:
+                            tab.visible = None
+                        else:
+                            tab.visible = VIEW_TAB
+                    elif event.key == K_3:
+                        if tab.visible == VAR_TAB:
+                            tab.visible = None
+                        else:
+                            tab.visible = VAR_TAB
                     elif event.key == K_a:
                         coor.axis_show = not coor.axis_show
                     elif event.key == K_g:
@@ -590,7 +634,11 @@ def main():
                 elif event.key == K_DOWN:
                     Func.set_act('d')
                 elif event.key == K_RETURN:
-                    func.visible = not func.visible
+                    if not Func.active:
+                        message.put_delayed(display,
+                                            "No expression has been created")
+                    else:
+                        func.visible = not func.visible
                 elif event.key == K_SPACE:
                     Func.insert(' ')
                 # basic input
@@ -618,8 +666,9 @@ def main():
                 coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
-            coor.scalex *= 1 + mouse_move[0] / -display_width
-            coor.scaley *= 1 + mouse_move[1] / display_height
+            minimal = min(display_width, display_height)
+            coor.scalex *= 1 + mouse_move[0] / -minimal
+            coor.scaley *= 1 + mouse_move[1] / minimal
         else:
             if corner.collidepoint(mouse_pos):
                 show_shortcuts()
@@ -636,7 +685,7 @@ def main():
         for func in Func.family:
             func.draw()
 
-        tab.func_tab()
+        tab.show_tab()
 
         message.show_delayed()
         display.blit(logo_img, (display_width - 45, 10))

@@ -1,6 +1,6 @@
 >>> General <<<
-  Command & F - show/hide function tab
-  Command & A - show/hide axis tab
+  Command & 1/2/3 - show/hide function/view/variable tab
+  Command & A - show/hide axis
   Command & G - show/hide grid system (grid function in beta)
   Command & S - save screenshot
   Command & M - minimise window
