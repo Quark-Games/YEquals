@@ -484,7 +484,7 @@ def main():
         func = Func.active
         corner = pygame.Rect(display_width - 45, 0, 45, 36)
 
-        # keyboard controls
+        # pygame event controls
         for event in pygame.event.get():
             if event.type == QUIT:
                 quit_all()
@@ -676,9 +676,10 @@ def show_shortcuts():
 def error(e_name):
     display.fill(WHITE)
     message.reset()
-    message.put(display, "Enconted Error")
+    message.put(display, "Encontered Error")
     message.indent()
     message.put(display, "Error name: " + e_name)
+    message.put(display, "Log location: " + os.path.abspath(os.path.curdir))
     message.put(display, "Press any key to exit...")
     display.blit(logo_img, (display_width - 45, 10))
     pygame.display.flip()
@@ -701,5 +702,5 @@ def quit_all(save=True):
 try:
     main()
 except Exception as e:
-    logger.error("Error occured during run-time!", exc_info=True)
+    logger.error("Log", exc_info=True)
     error(e.__class__.__name__)
