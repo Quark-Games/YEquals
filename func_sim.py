@@ -12,6 +12,7 @@ import re
 os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
 logger = logging.getLogger(__name__)
 CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018.",
+           "Michael Wang assists me with this project.",
            "Pygame is used as the major GUI framework."]
 
 # pygame display initiation
@@ -286,6 +287,8 @@ class Func:
         elif Func.family:
             Func.active = Func.family[index]
             Func._act_index = index
+        else:
+            Func.active = None
 
     def remove():
         if not tab.visible:
@@ -301,43 +304,52 @@ class Func:
         else:
             message.put_delayed(display, "No graph expression to remove")
 
-    def move_cursor(self, move):
+    def move_cursor(move):
         if not tab.visible:
             message.put_delayed(display, "Function tab not active")
             return
+        func = Func.active
         if move == -1:
-            if self.cursor > 0:
-                self.cursor -= 1
+            if func.cursor > 0:
+                func.cursor -= 1
         elif move == 1:
-            if self.cursor < len(self.exp):
-                self.cursor += 1
+            if func.cursor < len(func.exp):
+                func.cursor += 1
         if move == -2:
-            if self.cursor > 0:
-                self.cursor = 0
+            if func.cursor > 0:
+                func.cursor = 0
         elif move == 2:
-            if self.cursor < len(self.exp):
-                self.cursor = len(self.exp)
+            if func.cursor < len(func.exp):
+                func.cursor = len(func.exp)
 
-    def insert(self, char):
+    def insert(char):
+        if not Func.active:
+            message.put_delayed(display, "No expression has been created")
+            return
         if not tab.visible:
             message.put_delayed(display, "Function tab not active")
             return
-        if len(self.exp) > 25:
+        func = Func.active
+        if len(func.exp) > 25:
             message.put_delayed(display, "Expression too long")
             return
-        self.exp = self.exp[0:self.cursor] + char + self.exp[self.cursor:]
-        self.cursor += len(char)
+        func.exp = func.exp[0:func.cursor] + char + func.exp[func.cursor:]
+        func.cursor += len(char)
         if char in PARENTHESIS:
             close = PARENTHESIS[char]
-            self.exp = self.exp[0:self.cursor] + close + self.exp[self.cursor:]
+            func.exp = func.exp[0:func.cursor] + close + func.exp[func.cursor:]
 
-    def delete(self):
+    def delete():
+        if not Func.active:
+            message.put_delayed(display, "No expression has been created")
+            return
         if not tab.visible:
             message.put_delayed(display, "Function tab not active")
             return
-        if self.exp:
-            self.exp = self.exp[:self.cursor-1] + self.exp[self.cursor:]
-            self.cursor -= 1
+        func = Func.active
+        if func.exp:
+            func.exp = func.exp[:func.cursor-1] + func.exp[func.cursor:]
+            func.cursor -= 1
 
     def true_exp(self):
         exp_match = re.match(FULL_EXP, self.exp)
@@ -553,26 +565,26 @@ def main():
                                                 "Function tab not active")
                         else:
                             func.exp = pyperclip.paste()
-                            func.move_cursor(2)
+                            Func.move_cursor(2)
                     elif event.key == K_LEFT:
-                        func.move_cursor(-2)
+                        Func.move_cursor(-2)
                     elif event.key == K_RIGHT:
-                        func.move_cursor(2)
+                        Func.move_cursor(2)
                 elif mods & KMOD_SHIFT:
                     for shift in SHIFTS:
                         if event.key == shift[0]:
-                            func.insert(shift[1])
+                            Func.insert(shift[1])
                 elif mods & KMOD_ALT:
                     for alt in ALTS:
                         if event.key == alt[0]:
-                            func.insert(alt[1])
+                            Func.insert(alt[1])
                 elif event.key == K_BACKSPACE:
                     if func:
-                        func.delete()
+                        Func.delete()
                 elif event.key == K_LEFT:
-                    func.move_cursor(-1)
+                    Func.move_cursor(-1)
                 elif event.key == K_RIGHT:
-                    func.move_cursor(1)
+                    Func.move_cursor(1)
                 elif event.key == K_UP:
                     Func.set_act('u')
                 elif event.key == K_DOWN:
@@ -580,12 +592,12 @@ def main():
                 elif event.key == K_RETURN:
                     func.visible = not func.visible
                 elif event.key == K_SPACE:
-                    func.insert(' ')
+                    Func.insert(' ')
                 # basic input
                 else:
                     k_name = pygame.key.name(event.key)
                     if len(k_name) == 1:
-                        func.insert(pygame.key.name(event.key))
+                        Func.insert(pygame.key.name(event.key))
             elif event.type == MOUSEBUTTONDOWN:
                 if mods & KMOD_SHIFT:
                     if event.button == 4:
