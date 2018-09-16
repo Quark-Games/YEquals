@@ -151,8 +151,8 @@ class File:
                 Var.active = Var.family[Var._act_index]
             logger.debug("File {} is properly loaded".format(self.fname))
         except Exception as e:
-            logger.error("File {} is not properly loaded".format(self.fname))
             message.put_delayed(display, "Error occured while loading data")
+            logger.error("File {} is not properly loaded".format(self.fname))
 
     def put(self):
         try:
@@ -167,8 +167,8 @@ class File:
                 pickle.dump(coor.grid_show, f)
             logger.debug("File {} properly saved".format(self.fname))
         except Exception as e:
-            logger.error("File {} not properly saved".format(self.fname))
             message.put_delayed(display, "Error occured while saving data")
+            logger.error("File {} not properly saved".format(self.fname))
 
     def screenshot():
         pygame.image.save(display, SS_PATH)
@@ -274,6 +274,8 @@ class Var:
     def __init__(self, exp):
         if len(Var.family) < Var.limit:
             self._exp = ""
+            self._vname = None
+            self._value = None
             self.exp = exp
             self.cursor = len(exp)
             self.visible = True
@@ -291,10 +293,8 @@ class Var:
         self._exp = value
         self.legal_check()
         if not self.legality and self._vname in Var.vars:
-            print("first case")
             del Var.vars[self._vname]
         elif self.legality:
-            print("second case")
             Var.vars[self._vname] = self._value
 
     def set_act(index):
@@ -397,6 +397,9 @@ class Var:
         message.indent()
         message.put(display, msg)
         message.unindent()
+
+    def __del__(self):
+        del Var.vars[self._vname]
 
 
 class Func:
