@@ -297,9 +297,9 @@ class Var:
     def exp(self, value):
         self._exp = value
         self.legal_check()
-        if not self.legality and self._vname in Var.vars:
+        if self.legality != VAR_EXP_LEGAL and self._vname in Var.vars:
             del Var.vars[self._vname]
-        elif self.legality:
+        elif self.legality == VAR_EXP_LEGAL:
             Var.vars[self._vname] = self._value
 
     def set_act(index):
