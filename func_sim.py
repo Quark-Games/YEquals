@@ -69,7 +69,7 @@ SCALE_RATIO = 1.2
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]\s*$"
-COE_PAIR = r"[0-9|\)|\w|_][x|\(]"
+COE_PAIR = r"[0-9|\)|\w|_]x|x\("
 VAR_EXP = r"(?P<vname>[\w|_]+)\s?=\s?(?P<value>\S+)\s*$"
 PARENTHESIS = {'(': ')', '[': ']'}
 
