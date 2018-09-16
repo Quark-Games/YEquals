@@ -1,16 +1,22 @@
 import pygame
-from pygame.locals import *
 import logging
 from math import *
+from modkeys import *
 import os
 import pickle
 import pyperclip
 import re
 
 
-# preparation
+# change directory to assests
 os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
+
+# logger initiation
 logger = logging.getLogger(__name__)
+logging.basicConfig(filename="func_sim_debug.log", level=logging.DEBUG,
+                    format="%(levelname)s:%(funcName)s:%(message)s")
+
+# constant
 CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018.",
            "Michael Wang assists me with this project.",
            "Pygame is used as the major GUI framework."]
@@ -35,14 +41,21 @@ logo_img = pygame.image.load("quarkgame_logo.png")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+LIGHT_RED = (255, 128, 128)
 GREY = (230, 230, 230)
 DARK_GREY = (120, 120, 120)
 LIGHT_BLUE = (153, 204, 255)
 LIGHT_GREEN = (179, 255, 179)
 LIGHT_YELLOW = (255, 255, 153)
+
 FUNC_TAB = 1
-VIEW_TAB = 2
-VAR_TAB = 3
+VAR_TAB = 2
+VIEW_TAB = 3
+
+VAR_EXP_MATCH = 0
+VAR_EXP_NAME = 1
+VAR_EXP_VALUE = 2
+VAR_EXP_LEGAL = 3
 
 FPS = 30
 SCALE_DX = 80
@@ -51,60 +64,9 @@ SCALE_RATIO = 1.2
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]\s*$"
-COE_PAIR = r"[0-9|\)|x][x|\(]"
+COE_PAIR = r"[0-9|\)|\w|_][x|\(]"
+VAR_EXP = r"(?P<vname>[\w|_]+)\s?=\s?(?P<value>\S+)\s*$"
 PARENTHESIS = {'(': ')', '[': ']'}
-
-ALTS = ((K_v, '√'),
-        (K_p, 'π'),
-        (K_t, '±'),
-        (K_EQUALS, '≠'))
-SHIFTS = ((K_5, "%"),
-          (K_6, "^"),
-          (K_8, '*'),
-          (K_9, '('),
-          (K_0, ')'),
-          (K_EQUALS, '+'),
-          (K_COMMA, '<'),
-          (K_PERIOD, '>'))
-SWITCH = (('√', "sqrt"),
-          ('^', "**"),
-          ('%', "*0.01"),
-          ('π', "pi"),
-          ("+-", '±'),
-          ('=', "=="),
-          ('≠', "!="))
-
-
-class File:
-
-    def __init__(self, fname):
-        self.fname = fname
-
-    def get(self):
-        try:
-            with open(self.fname, 'rb') as f:
-                Func.family = pickle.load(f)
-                coor.scalex = pickle.load(f)
-                coor.scaley = pickle.load(f)
-                coor.origin = pickle.load(f)
-                coor.axis_show = pickle.load(f)
-                coor.grid_show = pickle.load(f)
-            if Func.family:
-                Func.active = Func.family[Func._act_index]
-        except Exception as e:
-            message.put_delayed(display, "Error occur while loading data")
-
-    def put(self):
-        with open(self.fname, 'wb') as f:
-            pickle.dump(Func.family, f)
-            pickle.dump(coor.scalex, f)
-            pickle.dump(coor.scaley, f)
-            pickle.dump(coor.origin, f)
-            pickle.dump(coor.axis_show, f)
-            pickle.dump(coor.grid_show, f)
-
-    def screenshot():
-        pygame.image.save(display, SS_PATH)
 
 
 class Message:
@@ -164,6 +126,52 @@ class Message:
         self.x -= 15
         pygame.draw.line(display, DARK_GREY, (0, self.y), (Tab.width, self.y))
         self.y += 2
+
+
+class File:
+
+    def __init__(self, fname):
+        self.fname = fname
+
+    def get(self):
+        try:
+            with open(self.fname, 'rb') as f:
+                Func.family = pickle.load(f)
+                Var.family = pickle.load(f)
+                coor.scalex = pickle.load(f)
+                coor.scaley = pickle.load(f)
+                coor.origin = pickle.load(f)
+                coor.axis_show = pickle.load(f)
+                coor.grid_show = pickle.load(f)
+            if Func.family:
+                Func.active = Func.family[Func._act_index]
+            if Var.family:
+                for var in Var.family:
+                    var.exp = var.exp
+                Var.active = Var.family[Var._act_index]
+            logger.debug("File {} is properly loaded".format(self.fname))
+        except Exception as e:
+            logger.error("File {} is not properly loaded".format(self.fname))
+            message.put_delayed(display, "Error occured while loading data")
+
+    def put(self):
+        try:
+            with open(self.fname, 'wb') as f:
+                Tab.visible = True
+                pickle.dump(Func.family, f)
+                pickle.dump(Var.family, f)
+                pickle.dump(coor.scalex, f)
+                pickle.dump(coor.scaley, f)
+                pickle.dump(coor.origin, f)
+                pickle.dump(coor.axis_show, f)
+                pickle.dump(coor.grid_show, f)
+            logger.debug("File {} properly saved".format(self.fname))
+        except Exception as e:
+            logger.error("File {} not properly saved".format(self.fname))
+            message.put_delayed(display, "Error occured while saving data")
+
+    def screenshot():
+        pygame.image.save(display, SS_PATH)
 
 
 class Coordinate:
@@ -256,6 +264,141 @@ class Coordinate:
                 message.label(label_x, line_y, val)
 
 
+class Var:
+    limit = 8
+    family = []
+    vars = {}
+    active = None
+    _act_index = 0
+
+    def __init__(self, exp):
+        if len(Var.family) < Var.limit:
+            self._exp = ""
+            self.exp = exp
+            self.cursor = len(exp)
+            self.visible = True
+            Var.family.append(self)
+            Var.set_act(len(Var.family) - 1)
+        else:
+            message.put_delayed(display, "Maximum graph exceeded")
+
+    @property
+    def exp(self):
+        return self._exp
+
+    @exp.setter
+    def exp(self, value):
+        self._exp = value
+        self.legal_check()
+        if not self.legality and self._vname in Var.vars:
+            print("first case")
+            del Var.vars[self._vname]
+        elif self.legality:
+            print("second case")
+            Var.vars[self._vname] = self._value
+
+    def set_act(index):
+        if index == 'u':
+            if Var._act_index > 0:
+                Var._act_index -= 1
+                Var.active = Var.family[Var._act_index]
+        elif index == 'd':
+            if Var._act_index < len(Var.family) - 1:
+                Var._act_index += 1
+                Var.active = Var.family[Var._act_index]
+        elif Var.family:
+            Var.active = Var.family[index]
+            Var._act_index = index
+        else:
+            Var.active = None
+
+    def remove():
+        if Var.family:
+            index = Var.family.index(Var.active)
+            Var.family.remove(Var.active)
+            if index == len(Var.family):
+                Var.set_act(index-1)
+            else:
+                Var.set_act(index)
+        else:
+            message.put_delayed(display, "No variable to remove")
+
+    def move_cursor(move):
+        var = Var.active
+        if move == -1:
+            if var.cursor > 0:
+                var.cursor -= 1
+        elif move == 1:
+            if var.cursor < len(var.exp):
+                var.cursor += 1
+        if move == -2:
+            if var.cursor > 0:
+                var.cursor = 0
+        elif move == 2:
+            if var.cursor < len(var.exp):
+                var.cursor = len(var.exp)
+
+    def insert(char):
+        if not Var.active:
+            message.put_delayed(display, "No variable has been created")
+            return
+        var = Var.active
+        if len(var.exp) > 25:
+            message.put_delayed(display, "Variable expression too long")
+            return
+        var.exp = var.exp[0:var.cursor] + char + var.exp[var.cursor:]
+        var.cursor += len(char)
+        if char in PARENTHESIS:
+            close = PARENTHESIS[char]
+            var.exp = var.exp[0:var.cursor] + close + var.exp[var.cursor:]
+
+    def delete():
+        if not Var.active:
+            message.put_delayed(display, "No variable has been created")
+            return
+        var = Var.active
+        if var.cursor != 0:
+            var.exp = var.exp[:var.cursor-1] + var.exp[var.cursor:]
+            var.cursor -= 1
+
+    def legal_check(self):
+        # determine legality of a variable expression
+        exp_match = re.match(VAR_EXP, self.exp)
+        if not exp_match:
+            self.legality = VAR_EXP_MATCH
+        else:
+            self._vname = exp_match.group("vname")
+            self._value = exp_match.group("value")
+            if not var_name(self._vname):
+                self.legality = VAR_EXP_NAME
+            elif not is_int(self._value):
+                self.legality = VAR_EXP_VALUE
+            else:
+                self.legality = VAR_EXP_LEGAL
+        return self.legality
+
+    def show(self):
+        if Var.active == self:
+            message.put(display,
+                        "var: " + self.exp[:self.cursor] +
+                        '|' + self.exp[self.cursor:])
+        else:
+            message.put(display, "var: " + self.exp)
+
+        # display variable status
+        if self.legality == VAR_EXP_MATCH:
+            msg = "the variable expression is illegal"
+        elif self.legality == VAR_EXP_NAME:
+            msg = "the name of the variable is illegal"
+        elif self.legality == VAR_EXP_VALUE:
+            msg = "the value of the variable is illegal"
+        elif self.legality == VAR_EXP_LEGAL:
+            msg = "the variable is legal"
+        message.indent()
+        message.put(display, msg)
+        message.unindent()
+
+
 class Func:
     limit = 8
     family = []
@@ -265,9 +408,6 @@ class Func:
     _stroke_width = 2
 
     def __init__(self, exp):
-        if not tab.visible:
-            message.put_delayed(display, "Function tab not active")
-            return
         if len(Func.family) < Func.limit:
             self.exp = exp
             self.cursor = len(exp)
@@ -278,9 +418,6 @@ class Func:
             message.put_delayed(display, "Maximum graph exceeded")
 
     def set_act(index):
-        if not tab.visible:
-            message.put_delayed(display, "Function tab not active")
-            return
         if index == 'u':
             if Func._act_index > 0:
                 Func._act_index -= 1
@@ -296,9 +433,6 @@ class Func:
             Func.active = None
 
     def remove():
-        if not tab.visible:
-            message.put_delayed(display, "Function tab not active")
-            return
         if Func.family:
             index = Func.family.index(Func.active)
             Func.family.remove(Func.active)
@@ -310,9 +444,6 @@ class Func:
             message.put_delayed(display, "No graph expression to remove")
 
     def move_cursor(move):
-        if not tab.visible:
-            message.put_delayed(display, "Function tab not active")
-            return
         func = Func.active
         if move == -1:
             if func.cursor > 0:
@@ -331,9 +462,6 @@ class Func:
         if not Func.active:
             message.put_delayed(display, "No expression has been created")
             return
-        if not tab.visible:
-            message.put_delayed(display, "Function tab not active")
-            return
         func = Func.active
         if len(func.exp) > 25:
             message.put_delayed(display, "Expression too long")
@@ -348,11 +476,8 @@ class Func:
         if not Func.active:
             message.put_delayed(display, "No expression has been created")
             return
-        if not tab.visible:
-            message.put_delayed(display, "Function tab not active")
-            return
         func = Func.active
-        if func.exp:
+        if func.cursor != 0:
             func.exp = func.exp[:func.cursor-1] + func.exp[func.cursor:]
             func.cursor -= 1
 
@@ -399,10 +524,13 @@ class Func:
                     message.unindent()
 
     def graph(self, exp, domain="True"):
-        # draw graph of Function
+        # draw graph of the expression
         old_pos = (-1, -1)
-        drawability = display_width
-        for raw_x in range(-1, display_width * Func._accuracy):
+        drawability = display_width * Func._accuracy + 1
+        for vname, value in Var.vars.items():
+            exec("{0} = {1}".format(vname, value))
+
+        for raw_x in range(-1, drawability - 1):
             try:
                 pixel_x = raw_x / Func._accuracy
                 x = (pixel_x - coor.origin[0]) / coor.scalex
@@ -423,7 +551,7 @@ class Func:
         self.drawability = drawability
 
     def show(self):
-        # display Function expression
+        # display expression
         if pygame.key.get_pressed()[K_TAB]:
             message.put(display, "y = " + str(self.true_exp()))
         else:
@@ -434,12 +562,12 @@ class Func:
             else:
                 message.put(display, "y = " + self.exp)
 
-        # display Function status
+        # display graph status
         if not self.visible:
             msg = "the graph is set to invisible"
         elif not self.drawability:
             msg = "the graph is not drawable"
-        elif self.drawability != display_width:
+        elif self.drawability != display_width * Func._accuracy + 1:
             msg = "the graph is not consistent"
         else:
             msg = "the graph is consistent in view"
@@ -470,10 +598,10 @@ class Tab:
     def show_tab(self):
         if tab.visible == FUNC_TAB:
             self.func_tab()
-        elif tab.visible == VIEW_TAB:
-            self.view_tab()
         elif tab.visible == VAR_TAB:
             self.var_tab()
+        elif tab.visible == VIEW_TAB:
+            self.view_tab()
 
     def func_tab(self):
         pygame.draw.rect(display,
@@ -482,12 +610,14 @@ class Tab:
         for func in Func.family:
             func.show()
 
-    def view_tab(self):
+    def var_tab(self):
         pygame.draw.rect(display,
                          LIGHT_GREEN,
                          (0, 0, Tab.width, display_height))
+        for var in Var.family:
+            var.show()
 
-    def var_tab(self):
+    def view_tab(self):
         pygame.draw.rect(display,
                          LIGHT_YELLOW,
                          (0, 0, Tab.width, display_height))
@@ -517,6 +647,29 @@ def sig_figure(x, fig):
     return round(x, fig - int(floor(log10(abs(x)))) - 1)
 
 
+def is_int(literal):
+    logger.debug("literal: ".format(literal))
+    try:
+        int(eval(literal))
+    except:
+        return False
+    else:
+        return True
+
+
+def var_name(literal):
+    if literal in Var.vars:
+        return True
+    elif literal in vars():
+        return False
+    elif literal in globals():
+        return False
+    elif literal in vars(__builtins__):
+        return False
+    else:
+        return True
+
+
 def main():
     global display_width, display_height, shortcuts
 
@@ -529,6 +682,7 @@ def main():
         # reset
         message.reset()
         func = Func.active
+        var = Var.active
         corner = pygame.Rect(display_width - 45, 0, 45, 36)
 
         # pygame event controls
@@ -537,7 +691,7 @@ def main():
                 quit_all()
             mods = pygame.key.get_mods()
             if event.type == KEYDOWN:
-                # keyboard operations with modifiers
+                # keyboard shortcuts with modifiers
                 if mods & KMOD_META and mods & KMOD_SHIFT:
                     if event.key == K_MINUS:
                         coor.scalex /= SCALE_RATIO
@@ -545,13 +699,13 @@ def main():
                     elif event.key == K_EQUALS:
                         coor.scalex *= SCALE_RATIO
                         coor.scaley *= SCALE_RATIO
+                    elif event.key == K_c:
+                        File.screenshot()
                 elif mods & KMOD_META:
                     if event.key == K_q:
                         quit_all()
                     elif event.key == K_m:
                         pygame.display.iconify()
-                    elif event.key == K_s:
-                        File.screenshot()
                     elif event.key == K_MINUS:
                         coor.scalex /= 2
                         coor.scaley /= 2
@@ -575,77 +729,119 @@ def main():
                         else:
                             coor.origin = [display_width/2, display_height/2]
                     elif event.key == K_BACKSPACE:
-                        Func.remove()
+                        if tab.visible == FUNC_TAB:
+                            Func.remove()
+                        if tab.visible == VAR_TAB:
+                            Var.remove()
                     elif event.key == K_RETURN:
-                        Func('')
+                        if tab.visible == FUNC_TAB:
+                            Func('')
+                        elif tab.visible == VAR_TAB:
+                            Var('')
                     elif event.key == K_1:
                         if tab.visible == FUNC_TAB:
                             tab.visible = None
                         else:
                             tab.visible = FUNC_TAB
                     elif event.key == K_2:
-                        if tab.visible == VIEW_TAB:
-                            tab.visible = None
-                        else:
-                            tab.visible = VIEW_TAB
-                    elif event.key == K_3:
                         if tab.visible == VAR_TAB:
                             tab.visible = None
                         else:
                             tab.visible = VAR_TAB
+                    elif event.key == K_3:
+                        if tab.visible == VIEW_TAB:
+                            tab.visible = None
+                        else:
+                            tab.visible = VIEW_TAB
                     elif event.key == K_a:
                         coor.axis_show = not coor.axis_show
                     elif event.key == K_g:
                         coor.grid_show = not coor.grid_show
                     elif event.key == K_c:
-                        if not tab.visible:
-                            message.put_delayed(display,
-                                                "Function tab not active")
-                        else:
+                        if tab.visible == FUNC_TAB:
                             pyperclip.copy(func.exp)
                     elif event.key == K_v:
-                        if not tab.visible:
-                            message.put_delayed(display,
-                                                "Function tab not active")
-                        else:
+                        if tab.visible == FUNC_TAB:
                             func.exp = pyperclip.paste()
                             Func.move_cursor(2)
                     elif event.key == K_LEFT:
                         Func.move_cursor(-2)
                     elif event.key == K_RIGHT:
                         Func.move_cursor(2)
-                elif mods & KMOD_SHIFT:
-                    for shift in SHIFTS:
-                        if event.key == shift[0]:
-                            Func.insert(shift[1])
-                elif mods & KMOD_ALT:
-                    for alt in ALTS:
-                        if event.key == alt[0]:
-                            Func.insert(alt[1])
-                elif event.key == K_BACKSPACE:
-                    if func:
-                        Func.delete()
-                elif event.key == K_LEFT:
-                    Func.move_cursor(-1)
-                elif event.key == K_RIGHT:
-                    Func.move_cursor(1)
-                elif event.key == K_UP:
-                    Func.set_act('u')
-                elif event.key == K_DOWN:
-                    Func.set_act('d')
-                elif event.key == K_RETURN:
-                    if not Func.active:
-                        message.put_delayed(display,
-                                            "No expression has been created")
+                elif not tab.visible:
+                    pass
+                elif tab.visible == FUNC_TAB:
+                    # shift key alternatives
+                    if mods & KMOD_SHIFT:
+                        for shift in SHIFTS:
+                            if event.key == shift[0]:
+                                Func.insert(shift[1])
+                    # alt key alternatives
+                    elif mods & KMOD_ALT:
+                        for alt in ALTS:
+                            if event.key == alt[0]:
+                                Func.insert(alt[1])
+                    # single key shortcuts
+                    elif event.key == K_BACKSPACE:
+                        if func:
+                            Func.delete()
+                    elif event.key == K_LEFT:
+                        Func.move_cursor(-1)
+                    elif event.key == K_RIGHT:
+                        Func.move_cursor(1)
+                    elif event.key == K_UP:
+                        Func.set_act('u')
+                    elif event.key == K_DOWN:
+                        Func.set_act('d')
+                    elif event.key == K_RETURN:
+                        if not Func.active:
+                            message.put_delayed(display,
+                                                "No expression available")
+                        else:
+                            func.visible = not func.visible
+                    elif event.key == K_SPACE:
+                        Func.insert(' ')
+                    # basic input
                     else:
-                        func.visible = not func.visible
-                elif event.key == K_SPACE:
-                    Func.insert(' ')
-                # basic input
-                else:
-                    k_name = pygame.key.name(event.key)
-                    if len(k_name) == 1:
-                        Func.insert(pygame.key.name(event.key))
+                        k_name = pygame.key.name(event.key)
+                        if not mods and len(k_name) == 1:
+                            Func.insert(pygame.key.name(event.key))
+                elif tab.visible == VAR_TAB:
+                    # shift key alternatives
+                    if mods & KMOD_SHIFT:
+                        for shift in SHIFTS:
+                            if event.key == shift[0]:
+                                Var.insert(shift[1])
+                    # alt key alternatives
+                    elif mods & KMOD_ALT:
+                        for alt in ALTS:
+                            if event.key == alt[0]:
+                                Var.insert(alt[1])
+                    # single key shortcuts
+                    elif event.key == K_BACKSPACE:
+                        if var:
+                            Var.delete()
+                    elif event.key == K_LEFT:
+                        Var.move_cursor(-1)
+                    elif event.key == K_RIGHT:
+                        Var.move_cursor(1)
+                    elif event.key == K_UP:
+                        Var.set_act('u')
+                    elif event.key == K_DOWN:
+                        Var.set_act('d')
+                    elif event.key == K_RETURN:
+                        if not Var.active:
+                            message.put_delayed(display,
+                                                "No expression available")
+                        else:
+                            var.visible = not var.visible
+                    elif event.key == K_SPACE:
+                        Var.insert(' ')
+                    # basic input
+                    else:
+                        k_name = pygame.key.name(event.key)
+                        if not mods and len(k_name) == 1:
+                            Var.insert(pygame.key.name(event.key))
             elif event.type == MOUSEBUTTONDOWN:
                 if mods & KMOD_SHIFT:
                     if event.button == 4:
@@ -735,6 +931,8 @@ def show_shortcuts():
 
 
 def error(e_name):
+    logger.error(e.__class__.__name__, exc_info=True)
+
     display.fill(WHITE)
     message.reset()
     message.put(display, "Encontered Error")
@@ -756,6 +954,7 @@ def error(e_name):
 def quit_all(save=True):
     if save:
         data.put()
+    logger.debug("Quit all called by user")
     pygame.quit()
     quit()
 
@@ -763,5 +962,4 @@ def quit_all(save=True):
 try:
     main()
 except Exception as e:
-    logger.error("Log", exc_info=True)
     error(e.__class__.__name__)
