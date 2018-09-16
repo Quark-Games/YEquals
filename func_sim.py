@@ -18,7 +18,7 @@ logging.basicConfig(filename="func_sim_debug.log", level=logging.DEBUG,
 
 # constant
 CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018.",
-           "Michael Wang assists me with this project.",
+           "Michael Wang assists me with this project.", # Present tense?
            "Pygame is used as the major GUI framework."]
 
 # pygame display initiation
