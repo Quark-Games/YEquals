@@ -6,19 +6,24 @@ import os
 import pickle
 import pyperclip
 import re
+from time import time
 
 
 # change directory to assests
-os.chdir(os.path.join(os.path.abspath(os.path.curdir), 'assets'))
+INIT_DIR = os.path.abspath(os.path.curdir)
+os.chdir(os.path.join(INIT_DIR, 'assets'))
 
 # logger initiation
+DEBUG_FILE = os.path.join(INIT_DIR, "debug", "debug_{}.log".format(time()))
+if not os.path.exists(os.path.join(INIT_DIR, "debug")):
+    os.makedirs(os.path.join(INIT_DIR, "debug"))
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename="func_sim_debug.log", level=logging.DEBUG,
+logging.basicConfig(filename=DEBUG_FILE, level=logging.DEBUG,
                     format="%(levelname)s:%(funcName)s:%(message)s")
 
 # constant
 CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018.",
-           "Michael Wang assists me with this project.", # Present tense?
+           "Michael Wang assists me with this project.",
            "Pygame is used as the major GUI framework."]
 
 # pygame display initiation
@@ -149,7 +154,7 @@ class File:
                 for var in Var.family:
                     var.exp = var.exp
                 Var.active = Var.family[Var._act_index]
-            logger.debug("File {} is properly loaded".format(self.fname))
+            logger.info("File {} is properly loaded".format(self.fname))
         except Exception as e:
             message.put_delayed(display, "Error occured while loading data")
             logger.error("File {} is not properly loaded".format(self.fname))
@@ -165,7 +170,7 @@ class File:
                 pickle.dump(coor.origin, f)
                 pickle.dump(coor.axis_show, f)
                 pickle.dump(coor.grid_show, f)
-            logger.debug("File {} properly saved".format(self.fname))
+            logger.info("File {} properly saved".format(self.fname))
         except Exception as e:
             message.put_delayed(display, "Error occured while saving data")
             logger.error("File {} not properly saved".format(self.fname))
@@ -651,10 +656,9 @@ def sig_figure(x, fig):
 
 
 def is_int(literal):
-    logger.debug("literal: ".format(literal))
     try:
         int(eval(literal))
-    except:
+    except Exception as e:
         return False
     else:
         return True
@@ -690,6 +694,7 @@ def main():
 
         # pygame event controls
         for event in pygame.event.get():
+            logger.debug("event:{}".format(event))
             if event.type == QUIT:
                 quit_all()
             mods = pygame.key.get_mods()
