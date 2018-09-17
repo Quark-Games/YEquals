@@ -21,11 +21,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(filename=DEBUG_FILE, level=logging.DEBUG,
                     format="%(levelname)s:%(funcName)s:%(message)s")
 
-# constant
-CREDITS = ["This QuarkGame project is created by Edward Ji in Sep 2018.",
-           "Michael Wang assists me with this project.",
-           "Pygame is used as the major GUI framework."]
-
 # pygame display initiation
 pygame.init()
 
@@ -907,33 +902,43 @@ def main():
 def show_shortcuts():
     global display_width, display_height
 
-    display.fill(WHITE)
-    message.reset()
-    message.put(display, "Shortcuts")
-    message.indent()
-    for shortcut in shortcuts:
-        message.put(display, shortcut)
-    message.unindent()
-    message.put(display, "Credits")
-    message.indent()
-    for line in CREDITS:
-        message.put(display, line)
-    display.blit(logo_img, (display_width - 45, 10))
-    pygame.display.flip()
-
     show = True
+    start = 0
+
     while show:
+
         for event in pygame.event.get():
             mods = pygame.key.get_mods()
             if mods & KMOD_META:
                 if event.key == K_q:
                     quit_all()
-            if event.type == VIDEORESIZE:
+            elif event.type == KEYDOWN:
+                if event.key == K_UP:
+                    if start > 0:
+                        start -= 1
+                elif event.key == K_DOWN:
+                    if start < len(shortcuts) - line_num - 1:
+                        start += 1
+            elif event.type == VIDEORESIZE:
                 tab.resize_win(event.w, event.h)
         mouse_pos = pygame.mouse.get_pos()
         corner = pygame.Rect(display_width - 45, 0, 45, 36)
         if not corner.collidepoint(mouse_pos):
             show = not show
+
+        display.fill(WHITE)
+        message.reset()
+        line_num = (display_height-10) / message.line_height - 1
+        logger.debug("line_num -> {}".format(line_num))
+        end = int(start + line_num)
+        logger.debug("end -> {}".format(end))
+        if end > len(shortcuts) - 1:
+            end = len(shortcuts) - 1
+        for i in range(start, end + 1):
+            message.put(display, shortcuts[i])
+        display.blit(logo_img, (display_width - 45, 10))
+        pygame.display.flip()
+
         clock.tick(FPS)
     message.reset()
 

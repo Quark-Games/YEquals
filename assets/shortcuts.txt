@@ -1,3 +1,4 @@
+Shortcuts
 >>> General <<<
   Command & 1/2/3/4 - switch between tabs
   Command & A - show/hide axis
@@ -34,3 +35,8 @@
 >>> Debug <<<
   Tab - show processed python-friendly expressions
   Caps lock - toggle frame per second message
+
+Credits
+This QuarkGame project is created by Edward Ji in Sep 2018.
+Michael Wang assists me with this project.
+Pygame is used as the major GUI framework.
