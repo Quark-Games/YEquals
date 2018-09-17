@@ -19,7 +19,7 @@ if not os.path.exists(os.path.join(INIT_DIR, "debug")):
     os.makedirs(os.path.join(INIT_DIR, "debug"))
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename=DEBUG_FILE, level=logging.DEBUG,
-                    format="%(levelname)s:%(funcName)s:%(message)s")
+                    format="%(funcName)s:%(message)s")
 
 # pygame display initiation
 pygame.init()
@@ -66,7 +66,9 @@ SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]\s*$"
 COE_PAIR = r"[0-9|\)|\w|_]x|x\("
 VAR_EXP = r"(?P<vname>[\w|_]+)\s?=\s?(?P<value>\S+)\s*$"
-PARENTHESIS = {'(': ')', '[': ']'}
+FILE_PATH = r"(\w+)/?(\w+)"
+PARENTHESIS = {'(': ')', '[': ']', '{': '}'}
+CLOSE_PAREN = (')', ']', '}')
 
 
 class Message:
@@ -346,6 +348,11 @@ class Var:
         if len(var.exp) > 25:
             message.put_delayed(display, "Variable expression too long")
             return
+        if char in CLOSE_PAREN:
+            if var.cursor <= len(var.exp) - 1:
+                if char == var.exp[var.cursor]:
+                    var.cursor += 1
+                    return
         var.exp = var.exp[0:var.cursor] + char + var.exp[var.cursor:]
         var.cursor += len(char)
         if char in PARENTHESIS:
@@ -469,6 +476,11 @@ class Func:
         if len(func.exp) > 25:
             message.put_delayed(display, "Expression too long")
             return
+        if char in CLOSE_PAREN:
+            if func.cursor <= len(func.exp) - 1:
+                if char == func.exp[func.cursor]:
+                    func.cursor += 1
+                    return
         func.exp = func.exp[0:func.cursor] + char + func.exp[func.cursor:]
         func.cursor += len(char)
         if char in PARENTHESIS:
