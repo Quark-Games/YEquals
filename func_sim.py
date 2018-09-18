@@ -6,7 +6,7 @@ import os
 import pickle
 import pyperclip
 import re
-import time import time
+from time import time
 
 
 # change directory to assests
