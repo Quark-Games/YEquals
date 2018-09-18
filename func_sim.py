@@ -6,7 +6,7 @@ import os
 import pickle
 import pyperclip
 import re
-import time import time
+import time
 
 
 # change directory to assests
@@ -14,7 +14,7 @@ INIT_DIR = os.path.abspath(os.path.curdir)
 os.chdir(os.path.join(INIT_DIR, 'assets'))
 
 # logger initiation
-DEBUG_FILE = os.path.join(INIT_DIR, "debug", "debug_{}.log".format(time()))
+DEBUG_FILE = os.path.join(INIT_DIR, "debug", "debug_{}.log".format(time.time()))
 if not os.path.exists(os.path.join(INIT_DIR, "debug")):
     os.makedirs(os.path.join(INIT_DIR, "debug"))
 logger = logging.getLogger(__name__)
