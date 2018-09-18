@@ -37,6 +37,7 @@ pygame.display.set_icon(icon_img)
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 20)
 logo_img = pygame.image.load("quarkgame_logo.png")
+tab_banner_img = pygame.image.load("tab_banner.png")
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -611,12 +612,16 @@ class Tab:
             coor.chori(Tab.width / 2, 0)
 
     def show_tab(self):
+        if tab.visible:
+            message.y += 40
         if tab.visible == FUNC_TAB:
             self.func_tab()
         elif tab.visible == VAR_TAB:
             self.var_tab()
         elif tab.visible == VIEW_TAB:
             self.view_tab()
+        if tab.visible:
+            display.blit(tab_banner_img, (0, 0))
 
     def func_tab(self):
         pygame.draw.rect(display,
