@@ -6,6 +6,7 @@ import os
 import pickle
 import pyperclip
 import re
+import sys
 from time import time
 
 
@@ -986,7 +987,7 @@ def quit_all(save=True):
         data.put()
     logger.debug("Quit all called by user")
     pygame.quit()
-    quit()
+    sys.exit()
 
 
 try:
