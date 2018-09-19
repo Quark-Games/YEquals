@@ -12,7 +12,7 @@ from time import time
 
 # change directory to assests
 INIT_DIR = os.path.abspath(os.path.curdir)
-os.chdir(os.path.join(INIT_DIR, 'assets'))
+ASSETS = os.path.join(INIT_DIR, 'assets'))
 
 # logger initiation
 DEBUG_FILE = os.path.join(INIT_DIR, "debug", "debug_{}.log".format(time()))
@@ -31,14 +31,14 @@ display_width = 1200
 display_height = 720
 
 display = pygame.display.set_mode((display_width, display_height), RESIZABLE)
-pygame.display.set_caption("Function Simulator")
-icon_img = pygame.image.load("icon.png")
+pygame.display.set_caption(os.path.join(ASSETS, "Function Simulator"))
+icon_img = pygame.image.load(os.path.join("icon.ico"))
 pygame.display.set_icon(icon_img)
 
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 20)
-logo_img = pygame.image.load("quarkgame_logo.png")
-tab_banner_img = pygame.image.load("tab_banner.png")
+logo_img = pygame.image.load(os.path.join("quarkgame_logo.png"))
+tab_banner_img = pygame.image.load(os.path.join("tab_banner.png"))
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -66,7 +66,7 @@ SCALE_RATIO = 1.2
 
 SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]\s*$"
-COE_PAIR = r"[0-9|\)|\w|_]x|x\("
+COE_PAIR = r"[0-9|\)|\w|_]x|x\(|\d\w"
 VAR_EXP = r"(?P<vname>[\w|_]+)\s?=\s?(?P<value>\S+)\s*$"
 FILE_PATH = r"(\w+)/?(\w+)"
 PARENTHESIS = {'(': ')', '[': ']', '{': '}'}
@@ -680,6 +680,8 @@ def is_int(literal):
 def var_name(literal):
     if literal in Var.vars:
         return True
+    elif literal in ['x', 'y']:
+        return False
     elif literal in vars():
         return False
     elif literal in globals():
