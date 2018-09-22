@@ -12,7 +12,7 @@ from time import time
 
 # change directory to assests
 INIT_DIR = os.path.abspath(os.path.curdir)
-ASSETS = os.path.join(INIT_DIR, 'assets'))
+ASSETS = os.path.join(INIT_DIR, 'assets')
 
 # logger initiation
 DEBUG_FILE = os.path.join(INIT_DIR, "debug", "debug_{}.log".format(time()))
@@ -32,13 +32,13 @@ display_height = 720
 
 display = pygame.display.set_mode((display_width, display_height), RESIZABLE)
 pygame.display.set_caption(os.path.join(ASSETS, "Function Simulator"))
-icon_img = pygame.image.load(os.path.join("icon.ico"))
+icon_img = pygame.image.load(os.path.join(ASSETS, "icon.png"))
 pygame.display.set_icon(icon_img)
 
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 20)
-logo_img = pygame.image.load(os.path.join("quarkgame_logo.png"))
-tab_banner_img = pygame.image.load(os.path.join("tab_banner.png"))
+logo_img = pygame.image.load(os.path.join(ASSETS, "quarkgame_logo.png"))
+tab_banner_img = pygame.image.load(os.path.join(ASSETS, "tab_banner.png"))
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -658,7 +658,7 @@ class Tab:
         coor.chori((w - old_w) / 2, (h - old_h) / 2)
 
 
-data = File("data.p")
+data = File(os.path.join(ASSETS, "data.p"))
 message = Message()
 coor = Coordinate()
 tab = Tab()
@@ -696,7 +696,7 @@ def main():
     global display_width, display_height, shortcuts
 
     data.get()
-    with open("shortcuts.txt", 'r') as f:
+    with open(os.path.join(ASSETS, "shortcuts.txt"), 'r') as f:
         shortcuts = [line.replace('\n', '') for line in f.readlines()]
 
     while True:
