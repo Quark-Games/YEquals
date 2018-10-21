@@ -882,7 +882,7 @@ def main():
         if mods & KMOD_CTRL:
             coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[0]:
-                coor.chori(*pygame.mouse.get_rel())
+            coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
             minimal = min(display_width, display_height)
