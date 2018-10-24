@@ -930,7 +930,7 @@ def show_shortcuts():
         for event in pygame.event.get():
             mods = pygame.key.get_mods()
             if mods & KMOD_META:
-                if event.key == K_q:
+                if event.type == KEYDOWN and event.key == K_q:
                     quit_all()
             elif event.type == KEYDOWN:
                 if event.key == K_UP:
