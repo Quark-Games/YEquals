@@ -8,6 +8,7 @@ import pyperclip
 import re
 import sys
 from time import time
+from extlib_sgn import sgn
 
 
 # change directory to assests
