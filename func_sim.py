@@ -8,7 +8,7 @@ import pyperclip
 import re
 import sys
 from time import time
-
+from extlib_sgn import sgn
 
 # change directory to assests
 INIT_DIR = os.path.abspath(os.path.curdir)
