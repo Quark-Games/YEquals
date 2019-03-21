@@ -666,6 +666,11 @@ tab = Tab()
 
 def sig_figure(x, fig):
     return round(x, fig - int(floor(log10(abs(x)))) - 1)
+    # print(int(log10(abs(x))))
+    # print(x, ',', fig, ',', int(floor(log10(abs(x)))))
+    # print(round(x, fig - int(floor(log10(abs(x)))) - 1))
+    # print(int(x * (10 ** fig)) / (10 ** fig))
+    # return int(x * (10 ** fig)) / (10 ** fig)
 
 
 def is_int(literal):
@@ -866,13 +871,13 @@ def main():
                         if not mods and len(k_name) == 1:
                             Var.insert(pygame.key.name(event.key))
             elif event.type == MOUSEBUTTONDOWN:
-                if mods & KMOD_SHIFT:
-                    if event.button == 4:
-                        coor.scalex /= SCALE_RATIO
-                        coor.scaley /= SCALE_RATIO
-                    elif event.button == 5:
-                        coor.scalex *= SCALE_RATIO
-                        coor.scaley *= SCALE_RATIO
+                # if mods & KMOD_SHIFT:
+                if event.button == 4:
+                    coor.scalex /= SCALE_RATIO
+                    coor.scaley /= SCALE_RATIO
+                elif event.button == 5:
+                    coor.scalex *= SCALE_RATIO
+                    coor.scaley *= SCALE_RATIO
             elif event.type == VIDEORESIZE:
                 tab.resize_win(event.w, event.h)
 
