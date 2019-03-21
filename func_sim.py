@@ -234,6 +234,7 @@ class Coordinate:
         # initiate value
         ori_x, ori_y = map(int, coor.origin)
         gap_x, gap_y = SCALE_DX / coor.scalex, SCALE_DY / coor.scaley
+        print(coor.origin)
         gap_x = sig_figure(gap_x, 2)
         gap_y = sig_figure(gap_y, 2)
         gap_px = int(gap_x * coor.scalex)
@@ -666,6 +667,7 @@ def sig_figure(x, fig):
     # print(x, fig, int(floor(log10(abs(x)))), round(x, fig - int(floor(log10(abs(x)))) - 1))
     # return round(x, fig + 2 * abs(int(floor(log10(abs(x))))) - 1)
     # return int(x * 10 ** (-int(floor(log10(abs(x))))) * 10 ** fig) / (10 ** (-int(floor(log10(abs(x))))) * 10 ** fig)
+    # return int(x * 10 ** fig) / 10 ** fig
     return round(x, fig - int(floor(log10(abs(x)))) - 1)
 
 
