@@ -242,9 +242,7 @@ class Coordinate:
         left_lim = Tab.width if tab.visible else 0
 
         # draw grid
-        for line_x in range((ori_x - left_lim) % gap_px + left_lim,
-                            display_width,
-                            gap_px):
+        for line_x in range((ori_x - left_lim) % gap_px + left_lim, display_width, gap_px):
             pygame.draw.line(display,
                              GREY,
                              (line_x, 0),
@@ -666,11 +664,6 @@ tab = Tab()
 
 def sig_figure(x, fig):
     return round(x, fig - int(floor(log10(abs(x)))) - 1)
-    # print(int(log10(abs(x))))
-    # print(x, ',', fig, ',', int(floor(log10(abs(x)))))
-    # print(round(x, fig - int(floor(log10(abs(x)))) - 1))
-    # print(int(x * (10 ** fig)) / (10 ** fig))
-    # return int(x * (10 ** fig)) / (10 ** fig)
 
 
 def is_int(literal):
