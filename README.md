@@ -12,7 +12,7 @@ However, it is completed with minimalist design and simple algorithms.
 ***
 
 # Shortcuts (best on Mac)
-You can now access the list of shortcuts by moving your cursor up the QuarkGame logo.
+You can now access the list of shortcuts by moving your cursor over the Q-shape logo.
 
 ***
 
