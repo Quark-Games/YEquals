@@ -31,7 +31,7 @@ display_width = 1200
 display_height = 720
 
 display = pygame.display.set_mode((display_width, display_height), RESIZABLE)
-pygame.display.set_caption(os.path.join(ASSETS, "Function Simulator"))
+pygame.display.set_caption(os.path.join(ASSETS, "YEquals"))
 icon_img = pygame.image.load(os.path.join(ASSETS, "icon.png"))
 pygame.display.set_icon(icon_img)
 
