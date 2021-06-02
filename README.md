@@ -1,11 +1,11 @@
-Welcome to the Function Simulator!
+Welcome to the YEquals grapher!
 
 ***
 
 # Credits
-This function simulator is created by the QuarkGame organisation in 2018.
+This grapher is created by QuarkGame in 2018.
 The grapher has less functionality than Desmos or Grapher on Mac.
-However, it is completed with minimalist design and simple algorithms.
+"However, it is completed with minimalist design and simple algorithms."
 
 [QuarkGame official website](https://jiziao6.wixsite.com/quarkgame)
 
