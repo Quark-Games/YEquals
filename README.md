@@ -8,8 +8,6 @@ This grapher is created by QuarkGame in 2018.
 The grapher has less functionality than Desmos or Grapher on Mac.
 "However, it is completed with minimalist design and simple algorithms."
 
-[QuarkGame official website](https://jiziao6.wixsite.com/quarkgame)
-
 ***
 
 # Shortcuts (best on Mac)
