@@ -995,7 +995,4 @@ def quit_all(save=True):
     sys.exit()
 
 
-# try:
 main()
-# except Exception as e:
-#     error(e.__class__.__name__)
