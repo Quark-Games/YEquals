@@ -4,6 +4,10 @@ extlib made by Michael.
 includes sgn()
 """
 
+def sgn0(num: float) -> float:
+    if num < 0:
+        return -1
+    return 1
 
 def sgn(num: float) -> float:
     """
