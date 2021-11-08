@@ -718,7 +718,7 @@ def main():
             mods = pygame.key.get_mods()
             if event.type == KEYDOWN:
                 # keyboard shortcuts with modifiers
-                if mods & KMOD_META and mods & KMOD_SHIFT:
+                if (mods & KMOD_META and mods & KMOD_SHIFT) or (mods & KMOD_CTRL and mods & KMOD_SHIFT):
                     if event.key == K_MINUS:
                         coor.scalex /= SCALE_RATIO
                         coor.scaley /= SCALE_RATIO
@@ -727,7 +727,7 @@ def main():
                         coor.scaley *= SCALE_RATIO
                     elif event.key == K_c:
                         File.screenshot()
-                elif mods & KMOD_META:
+                elif (mods & KMOD_META) or (mods & KMOD_CTRL):
                     if event.key == K_q:
                         quit_all()
                     elif event.key == K_m:
@@ -882,7 +882,7 @@ def main():
         # mouse control
         mouse_press = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
-        if mods & KMOD_CTRL:
+        if (mods & KMOD_META) or (mods & KMOD_CTRL):
             coor.chori(*pygame.mouse.get_rel())
         elif mouse_press[0]:
             coor.chori(*pygame.mouse.get_rel())
@@ -932,7 +932,7 @@ def show_shortcuts():
 
         for event in pygame.event.get():
             mods = pygame.key.get_mods()
-            if mods & KMOD_META:
+            if (mods & KMOD_META) or (mods & KMOD_CTRL):
                 if event.type == KEYDOWN and event.key == K_q:
                     quit_all()
             elif event.type == KEYDOWN:
