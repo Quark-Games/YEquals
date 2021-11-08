@@ -1,37 +1,37 @@
 Shortcuts
 >>> General <<<
-  Command & 1/2/3/4 - switch between tabs
-  Command & A - show/hide axis
-  Command & G - show/hide grid system (grid function in beta)
-  Command & Shift & C - capture screenshot (save to Desktop)
-  Command & C - copy the entire line
-  Command & V - paste to replace current line
-  Command & M - minimise window
-  Command & Q - quit
+  (Command | Control) & 1/2/3/4 - switch between tabs
+  (Command | Control) & A - show/hide axis
+  (Command | Control) & G - show/hide grid system (grid function in beta)
+  (Command | Control) & Shift & C - capture screenshot (save to Desktop)
+  (Command | Control) & C - copy the entire line
+  (Command | Control) & V - paste to replace current line
+  (Command | Control) & M - minimise window
+  (Command | Control) & Q - quit
 >>> View <<<
-  Command & - (minus sign) - reduce scale (both x and y)
-  Command & = (equal sign) - reduce scale (both x and y)
-  Command & 0 - go back to default scale and origin
-  Command & 9 - equalise the scale x and scale y
-  Command & 8 - go back to origin
+  (Command | Control) & - (minus sign) - reduce scale (both x and y)
+  (Command | Control) & = (equal sign) - reduce scale (both x and y)
+  (Command | Control) & 0 - go back to default scale and origin
+  (Command | Control) & 9 - equalise the scale x and scale y
+  (Command | Control) & 8 - go back to origin
   Shift & (middle mouse) scroll - scale x and y
-  Control & mouse drag - move origin
+  (Command | Control) & mouse drag - move origin
   Mouse left click & drag - move origin
   Mouse right click & drag - adjust scale x and y according to movement
 >>> Function tab <<<
-  Command & Backspace - remove a function
-  Command & Enter - add a new function
+  (Command | Control) & Backspace - remove a function
+  (Command | Control) & Enter - add a new function
   Enter - make function visible/invisible
   Up/Down arrow - switch between functions
   Left/Right arrow - move cursor in function editor
-  Command & Left/Right - move cursor to left most or right most
+  (Command | Control) & Left/Right - move cursor to left most or right most
 >>> Variable tab <<<
-  Command & Backspace - remove a variable
-  Command & Enter - add a new variable
+  (Command | Control) & Backspace - remove a variable
+  (Command | Control) & Enter - add a new variable
   Enter - make function visible/invisible
   Up/Down arrow - switch between functions
   Left/Right arrow - move cursor in function editor
-  Command & Left/Right - move cursor to left most or right most
+  (Command | Control) & Left/Right - move cursor to left most or right most
 >>> Debug <<<
   Tab - show processed python-friendly expressions
   Caps lock - toggle frame per second message
