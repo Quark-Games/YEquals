@@ -603,7 +603,10 @@ def evaluate2(x, y, exp, ori_x, ori_y, scalex, scaley):
     if e:
         x = (x - ori_x) / scalex
         y = (ori_y - y) / scaley
-    return eval(exp)
+    try:
+        return eval(exp)
+    except Exception:
+        return 0
 
 
 
