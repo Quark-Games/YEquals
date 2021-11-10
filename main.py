@@ -11,8 +11,6 @@ from time import time
 from extlib import sgn, sgn0
 import traceback
 import functools
-import multiprocessing
-import itertools
 
 
 # change directory to assests
@@ -240,7 +238,6 @@ class Coordinate:
         # initiate value
         ori_x, ori_y = map(int, coor.origin)
         gap_x, gap_y = SCALE_DX / coor.scalex, SCALE_DY / coor.scaley
-        # print(coor.origin)
         gap_x = sig_figure(gap_x, 2)
         gap_y = sig_figure(gap_y, 2)
         gap_px = int(gap_x * coor.scalex)

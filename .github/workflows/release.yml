@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    branches: [ master ]
+  
+jobs:
+  linux-release:
+    name: "Linux Release"
+    runs-on: "ubuntu-latest"
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Build
+      run: |
+        pyinstaller --onefile ./main.py
+        mv dist/main ./main
+        chmod +x main
+        zip -r latest-linux.zip main assets
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest-linux"
+        title: "Linux Release"
+        prerelease: false
+        files: |
+          latest-linux.zip
+  windows-release:
+    name: "Windows Release"
+    runs-on: "windows-latest"
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Build
+      run: |
+        pyinstaller --onefile ./main.py
+        mv dist/main.exe ./main.exe
+        Compress-Archive main.exe windows-latest.zip
+        Compress-Archive assets -Update windows-latest.zip
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest-windows"
+        title: "Windows Release"
+        prerelease: false
+        files: |
+          windows-latest.zip
+  mac-release:
+    name: "Mac Release"
+    runs-on: "macos-latest"
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Build
+      run: |
+        pyinstaller --onefile ./main.py
+        mv dist/main ./main
+        zip -r latest-mac.zip main assets
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest-mac"
+        title: "Mac Release"
+        prerelease: false
+        files: |
+          latest-mac.zip
