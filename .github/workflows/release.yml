@@ -23,6 +23,7 @@ jobs:
       run: |
         pyinstaller --onefile ./main.py
         mv dist/main ./main
+        chmod +x main
         zip -r latest-linux.zip main assets
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
@@ -75,9 +76,6 @@ jobs:
     - name: Build
       run: |
         pyinstaller --onefile ./main.py
-        cd dist
-        ls
-        cd ..
         mv dist/main ./main
         zip -r latest-mac.zip main assets
     - uses: "marvinpinto/action-automatic-releases@latest"
