@@ -11,8 +11,6 @@ from time import time
 from extlib import sgn, sgn0
 import traceback
 import functools
-import multiprocessing
-import itertools
 
 
 # change directory to assests

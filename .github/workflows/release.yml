@@ -10,9 +10,9 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@latest
     - name: Set up Python 3.10
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@latest
       with:
         python-version: "3.10"
     - name: Install dependencies
@@ -30,6 +30,7 @@ jobs:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "latest-linux"
         title: "Linux Release"
+        prerelease: false
         files: |
           latest-linux.zip
   windows-release:
@@ -37,9 +38,9 @@ jobs:
     runs-on: "windows-latest"
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@latest
     - name: Set up Python 3.10
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@latest
       with:
         python-version: "3.10"
     - name: Install dependencies
@@ -57,6 +58,7 @@ jobs:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "latest-windows"
         title: "Windows Release"
+        prerelease: false
         files: |
           windows-latest.zip
   mac-release:
@@ -64,9 +66,9 @@ jobs:
     runs-on: "macos-latest"
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@latest
     - name: Set up Python 3.10
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@latest
       with:
         python-version: "3.10"
     - name: Install dependencies
@@ -83,5 +85,6 @@ jobs:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "latest-mac"
         title: "Mac Release"
+        prerelease: false
         files: |
           latest-mac.zip
