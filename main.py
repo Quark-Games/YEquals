@@ -809,7 +809,10 @@ class Relation(Func):
             self.drawability = 0
         except NameError:
             self.drawability = 0
+        except TypeError:
+            self.drawability = 0
         except Exception:
+            self.drawability = 0
             print(traceback.format_exc())
 
     def show(self):
