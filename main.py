@@ -56,6 +56,7 @@ LIGHT_YELLOW = (255, 255, 153)
 FUNC_TAB = 1
 VAR_TAB = 2
 VIEW_TAB = 3
+RELA_TAB = 4
 
 VAR_EXP_MATCH = 0
 VAR_EXP_NAME = 1
@@ -157,7 +158,7 @@ class File:
                     var.exp = var.exp
                 Var.active = Var.family[Var._act_index]
             logger.info("File {} is properly loaded".format(self.fname))
-        except Exception as e:
+        except Exception:
             message.put_delayed(display, "Error occured while loading data")
             logger.error("File {} is not properly loaded".format(self.fname))
 
@@ -220,15 +221,15 @@ class Coordinate:
     def axis(self):
         if self.axis_show:
             pygame.draw.line(display,
-                             RED,
-                             (0, self.origin[1]),
-                             (display_width, self.origin[1]),
-                             Coordinate._stroke_width)
+                            RED,
+                            (0, self.origin[1]),
+                            (display_width, self.origin[1]),
+                            Coordinate._stroke_width)
             pygame.draw.line(display,
-                             RED,
-                             (self.origin[0], 0),
-                             (self.origin[0], display_height),
-                             Coordinate._stroke_width)
+                            RED,
+                            (self.origin[0], 0),
+                            (self.origin[0], display_height),
+                            Coordinate._stroke_width)
 
     def grid(self):
         if not self.grid_show:
@@ -247,10 +248,10 @@ class Coordinate:
         # draw grid
         for line_x in range((ori_x - left_lim) % gap_px + left_lim, display_width, gap_px):
             pygame.draw.line(display,
-                             GREY,
-                             (line_x, 0),
-                             (line_x, display_height),
-                             Coordinate._stroke_width)
+                            GREY,
+                            (line_x, 0),
+                            (line_x, display_height),
+                            Coordinate._stroke_width)
             val = (line_x - ori_x) / coor.scalex
             if val != 0:
                 val = sig_figure(val, 2)
@@ -259,10 +260,10 @@ class Coordinate:
                 message.label(line_x, label_y, 0)
         for line_y in range(ori_y % gap_py, display_height, gap_py):
             pygame.draw.line(display,
-                             GREY,
-                             (0, line_y),
-                             (display_width, line_y),
-                             Coordinate._stroke_width)
+                            GREY,
+                            (0, line_y),
+                            (display_width, line_y),
+                            Coordinate._stroke_width)
             val = (ori_y - line_y) / coor.scaley
             if val != 0:
                 val = sig_figure(val, 2)
@@ -559,10 +560,10 @@ class Func:
                 temp = temp and eval(domain)
                 if pixel_x - old_pos[0] <= 1 and temp:
                     pygame.draw.line(display,
-                                     BLACK,
-                                     old_pos,
-                                     (round(pixel_x), round(pixel_y)),
-                                     Func._stroke_width)
+                                    BLACK,
+                                    old_pos,
+                                    (round(pixel_x), round(pixel_y)),
+                                    Func._stroke_width)
                 old_pos = (round(pixel_x), round(pixel_y))
             except Exception:
                 drawability -= 1
@@ -594,6 +595,253 @@ class Func:
         message.unindent()
 
 
+@functools.cache
+def evaluate2(x, y, exp, ori_x, ori_y, scalex, scaley):
+    if e:
+        x = (x - ori_x) / scalex
+        y = (ori_y - y) / scaley
+    try:
+        return eval(exp)
+    except Exception:
+        return 0
+
+
+
+class Relation(Func):
+    limit = 8
+    family = []
+    active = None
+    _act_index = 0
+    _accuracy = 1
+    _stroke_width = 2
+
+    def __init__(self, exp):
+        if len(Relation.family) < Relation.limit:
+            self.exp = exp
+            self.cursor = len(exp)
+            self.visible = True
+            Relation.family.append(self)
+            Relation.set_act(len(Relation.family) - 1)
+            self.drawability = 0
+        else:
+            message.put_delayed(display, "Maximum graph exceeded")
+
+    def set_act(index):
+        if index == 'u':
+            if Relation._act_index > 0:
+                Relation._act_index -= 1
+                Relation.active = Relation.family[Relation._act_index]
+        elif index == 'd':
+            if Relation._act_index < len(Relation.family) - 1:
+                Relation._act_index += 1
+                Relation.active = Relation.family[Relation._act_index]
+        elif Relation.family:
+            Relation.active = Relation.family[index]
+            Relation._act_index = index
+        else:
+            Relation.active = None
+
+    def remove():
+        if Relation.family:
+            index = Relation.family.index(Relation.active)
+            Relation.family.remove(Relation.active)
+            if index == len(Relation.family):
+                Relation.set_act(index-1)
+            else:
+                Relation.set_act(index)
+        else:
+            message.put_delayed(display, "No graph expression to remove")
+
+    def move_cursor(move):
+        func = Relation.active
+        if move == -1:
+            if func.cursor > 0:
+                func.cursor -= 1
+        elif move == 1:
+            if func.cursor < len(func.exp):
+                func.cursor += 1
+        if move == -2:
+            if func.cursor > 0:
+                func.cursor = 0
+        elif move == 2:
+            if func.cursor < len(func.exp):
+                func.cursor = len(func.exp)
+
+    def insert(char):
+        if not Relation.active:
+            message.put_delayed(display, "No expression has been created")
+            return
+        func = Relation.active
+        if len(func.exp) > 25:
+            message.put_delayed(display, "Expression too long")
+            return
+        if char in CLOSE_PAREN:
+            if func.cursor <= len(func.exp) - 1:
+                if char == func.exp[func.cursor]:
+                    func.cursor += 1
+                    return
+        func.exp = func.exp[0:func.cursor] + char + func.exp[func.cursor:]
+        func.cursor += len(char)
+        if char in PARENTHESIS:
+            close = PARENTHESIS[char]
+            func.exp = func.exp[0:func.cursor] + close + func.exp[func.cursor:]
+
+    def delete():
+        if not Relation.active:
+            message.put_delayed(display, "No expression has been created")
+            return
+        func = Relation.active
+        if func.cursor != 0:
+            func.exp = func.exp[:func.cursor-1] + func.exp[func.cursor:]
+            func.cursor -= 1
+
+    def true_exp(self):
+        # exp_match = re.match(FULL_EXP, self.exp)
+        # if not exp_match:
+        #     exp = self.exp
+        # else:
+        #     exp = exp_match.group("exp")
+        #     domain = exp_match.group("domain")
+        #     for switch in SWITCH:
+        #         domain = domain.replace(switch[0], switch[1])
+
+        # for switch in SWITCH:
+        #     exp = exp.replace(switch[0], switch[1])
+        # while re.findall(COE_PAIR, exp):
+        #     for pair in set(re.findall(COE_PAIR, exp)):
+        #         exp = exp.replace(pair, pair[0] + '*' + pair[1])
+
+        # if not exp_match:
+        #     return exp
+        # else:
+        #     return exp, domain
+        
+        # TODO: fix this
+        return self.exp
+
+    def draw(self):
+        true_exp = self.true_exp()
+        if self.visible:
+            if type(true_exp) == str:
+                if '±' not in true_exp:
+                    self.graph(true_exp)
+                else:
+                    message.indent()
+                    self.graph(true_exp.replace('±', '+'))
+                    self.graph(true_exp.replace('±', '-'))
+                    message.unindent()
+            else:
+                exp, domain = true_exp
+                if '±' not in exp:
+                    self.graph(exp, domain)
+                else:
+                    message.indent()
+                    self.graph(exp.replace('±', '+'), domain)
+                    self.graph(exp.replace('±', '-'), domain)
+                    message.unindent()
+
+    def graph(self, exp, domain="True"):
+        if list(exp).count("=") != 1:
+            self.drawability = 0
+            return
+        self.drawability = 1
+        
+        # draw graph of the relation
+        # initiate value
+        ori_x, ori_y = map(int, coor.origin)
+        gap_x, gap_y = SCALE_DX / coor.scalex, SCALE_DY / coor.scaley
+        # print(coor.origin)
+        gap_x = sig_figure(gap_x, 2)
+        gap_y = sig_figure(gap_y, 2)
+        gap_px = int(gap_x * coor.scalex) // 5
+        gap_py = int(gap_y * coor.scaley) // 5
+        left_lim = Tab.width if tab.visible else 0
+    
+
+        # compute matrix
+        try:
+            # sanity check
+            r = tuple(exp.split("="))
+            evaluate2(0, 0, r[0], ori_x, ori_y, coor.scalex, coor.scaley)
+            evaluate2(0, 0, r[1], ori_x, ori_y, coor.scalex, coor.scaley)
+            
+            # compute matrix
+            matrix = []
+            for x in range((ori_x - left_lim) % gap_px + left_lim, display_width, gap_px):
+                matrix.append([])
+                for y in range(ori_y % gap_py, display_height, gap_py):
+                    matrix[-1].append(evaluate2(x, y, r[0], ori_x, ori_y, coor.scalex, coor.scaley) - evaluate2(x, y, r[1], ori_x, ori_y, coor.scalex, coor.scaley))
+            # compute
+            points = []
+            for mx, x in enumerate(range((ori_x - left_lim) % gap_px + left_lim, display_width - gap_px, gap_px)):
+                for my, y in enumerate(range(ori_y % gap_py, display_height - gap_py, gap_py)):
+                    # pygame.draw.rect(display, BLACK, (x, y, 10, 10), 1)
+                    temp = []
+                    if sgn0(matrix[mx][my]) != sgn0(matrix[mx+1][my]):
+                        temp.append((
+                            x + gap_px * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx+1][my])),
+                            y,
+                        ))
+                    if sgn0(matrix[mx][my]) != sgn0(matrix[mx][my+1]):
+                        temp.append((
+                            x,
+                            y + gap_py * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx][my+1])),
+                        ))
+                    if sgn0(matrix[mx+1][my]) != sgn0(matrix[mx+1][my+1]):
+                        temp.append((
+                            x + gap_px,
+                            y + gap_py * abs(matrix[mx+1][my]) / (abs(matrix[mx+1][my]) + abs(matrix[mx+1][my+1])),
+                        ))
+                    if sgn0(matrix[mx][my+1]) != sgn0(matrix[mx+1][my+1]):
+                        temp.append((
+                            x + gap_px * abs(matrix[mx][my+1]) / (abs(matrix[mx][my+1]) + abs(matrix[mx+1][my+1])),
+                            y + gap_py,
+                        ))
+                    if len(temp) == 2:
+                        points.append(((int(temp[0][0]), int(temp[0][1])), (int(temp[1][0]), int(temp[1][1]))))
+
+            for point in points:
+                pygame.draw.line(
+                    display,
+                    BLACK,
+                    point[0],
+                    point[1],
+                    Relation._stroke_width,
+                )
+        except SyntaxError:
+            pass
+        except NameError:
+            pass
+        except Exception:
+            print(traceback.format_exc())
+
+    def show(self):
+        # display expression
+        if pygame.key.get_pressed()[K_TAB]:
+            message.put(display, "y = " + str(self.true_exp()))
+        else:
+            if Relation.active == self:
+                message.put(
+                    display,
+                    self.exp[:self.cursor] +
+                    '|' + self.exp[self.cursor:],
+                )
+            else:
+                message.put(display, "y = " + self.exp)
+
+        # display graph status
+        if not self.visible:
+            msg = "the graph is set to invisible"
+        elif not self.drawability:
+            msg = "the graph is not drawable"
+        elif self.drawability != display_width * Relation._accuracy + 1:
+            msg = "the graph is not consistent"
+        else:
+            msg = "the graph is consistent in view"
+        message.indent()
+        message.put(display, msg)
+        message.unindent()
+
 class Tab:
     width = 300
 
@@ -622,27 +870,38 @@ class Tab:
             self.var_tab()
         elif tab.visible == VIEW_TAB:
             self.view_tab()
+        elif tab.visible == RELA_TAB:
+            self.rela_tab()
         if tab.visible:
             display.blit(tab_banner_img, (0, 0))
 
     def func_tab(self):
         pygame.draw.rect(display,
-                         LIGHT_BLUE,
-                         (0, 0, Tab.width, display_height))
+                        LIGHT_BLUE,
+                        (0, 0, Tab.width, display_height))
         for func in Func.family:
             func.show()
 
     def var_tab(self):
         pygame.draw.rect(display,
-                         LIGHT_GREEN,
-                         (0, 0, Tab.width, display_height))
+                        LIGHT_GREEN,
+                        (0, 0, Tab.width, display_height))
         for var in Var.family:
             var.show()
 
     def view_tab(self):
         pygame.draw.rect(display,
-                         LIGHT_YELLOW,
-                         (0, 0, Tab.width, display_height))
+                        LIGHT_YELLOW,
+                        (0, 0, Tab.width, display_height))
+    
+    def rela_tab(self):
+        pygame.draw.rect(
+            display,
+            LIGHT_RED,
+            (0, 0, Tab.width, display_height),
+        )
+        for rela in Relation.family:
+            rela.show()
 
     def resize_win(self, w, h):
         global display_width, display_height
@@ -666,10 +925,6 @@ tab = Tab()
 
 
 def sig_figure(x, fig):
-    # print(x, fig, int(floor(log10(abs(x)))), round(x, fig - int(floor(log10(abs(x)))) - 1))
-    # return round(x, fig + 2 * abs(int(floor(log10(abs(x))))) - 1)
-    # return int(x * 10 ** (-int(floor(log10(abs(x))))) * 10 ** fig) / (10 ** (-int(floor(log10(abs(x))))) * 10 ** fig)
-    # return int(x * 10 ** fig) / 10 ** fig
     return round(x, fig - int(floor(log10(abs(x)))) - 1)
 
 
@@ -710,6 +965,7 @@ def main():
         message.reset()
         func = Func.active
         var = Var.active
+        rela = Relation.active
         corner = pygame.Rect(display_width - 45, 0, 45, 36)
 
         # pygame event controls
@@ -718,8 +974,11 @@ def main():
             if event.type == QUIT:
                 quit_all()
             mods = pygame.key.get_mods()
+
+            # if key press
             if event.type == KEYDOWN:
-                # keyboard shortcuts with modifiers
+
+                # cmd / ctrl + shift
                 if (mods & KMOD_META and mods & KMOD_SHIFT) or (mods & KMOD_CTRL and mods & KMOD_SHIFT):
                     if event.key == K_MINUS:
                         coor.scalex /= SCALE_RATIO
@@ -729,6 +988,8 @@ def main():
                         coor.scaley *= SCALE_RATIO
                     elif event.key == K_c:
                         File.screenshot()
+
+                # cmd / ctrl
                 elif (mods & KMOD_META) or (mods & KMOD_CTRL):
                     if event.key == K_q:
                         quit_all()
@@ -743,17 +1004,22 @@ def main():
                     elif event.key == K_0:
                         coor.scalex, coor.scaley = SCALE_DX, SCALE_DY
                         if tab.visible:
-                            coor.origin = [display_width / 2 + Tab.width / 2,
-                                           display_height / 2]
+                            coor.origin = [
+                                display_width / 2 + Tab.width / 2,
+                                display_height / 2,
+                            ]
                         else:
-                            coor.origin = [display_width/2, display_height/2]
+                            coor.origin = [
+                                display_width/2,
+                                display_height/2,
+                            ]
                     elif event.key == K_9:
                         ave = (coor.scalex + coor.scaley) / 2
                         coor.scalex, coor.scaley = ave, ave
                     elif event.key == K_8:
                         if tab.visible:
                             coor.origin = [display_width / 2 + Tab.width / 2,
-                                           display_height / 2]
+                                        display_height / 2]
                         else:
                             coor.origin = [display_width/2, display_height/2]
                     elif event.key == K_BACKSPACE:
@@ -766,6 +1032,8 @@ def main():
                             Func('')
                         elif tab.visible == VAR_TAB:
                             Var('')
+                        elif tab.visible == RELA_TAB:
+                            Relation('')
                     elif event.key == K_1:
                         if tab.visible == FUNC_TAB:
                             tab.visible = None
@@ -781,6 +1049,11 @@ def main():
                             tab.visible = None
                         else:
                             tab.visible = VIEW_TAB
+                    elif event.key == K_4:
+                        if tab.visible == RELA_TAB:
+                            tab.visible = None
+                        else:
+                            tab.visible = RELA_TAB
                     elif event.key == K_a:
                         coor.axis_show = not coor.axis_show
                     elif event.key == K_g:
@@ -798,6 +1071,44 @@ def main():
                         Func.move_cursor(2)
                 elif not tab.visible:
                     pass
+                elif tab.visible == RELA_TAB:
+                    # shift key alternatives
+                    if mods & KMOD_SHIFT:
+                        for shift in SHIFTS:
+                            if event.key == shift[0]:
+                                Relation.insert(shift[1])
+                    # alt key alternatives
+                    elif mods & KMOD_ALT:
+                        for alt in ALTS:
+                            if event.key == alt[0]:
+                                Relation.insert(alt[1])
+                    # single key shortcuts
+                    elif event.key == K_BACKSPACE:
+                        if rela:
+                            Relation.delete()
+                    elif event.key == K_LEFT:
+                        Relation.move_cursor(-1)
+                    elif event.key == K_RIGHT:
+                        Relation.move_cursor(1)
+                    elif event.key == K_UP:
+                        Relation.set_act('u')
+                    elif event.key == K_DOWN:
+                        Relation.set_act('d')
+                    elif event.key == K_RETURN:
+                        if not Relation.active:
+                            message.put_delayed(
+                                display,
+                                "No expression available",
+                            )
+                        else:
+                            rela.visible = not rela.visible
+                    elif event.key == K_SPACE:
+                        Relation.insert(' ')
+                    # basic input
+                    else:
+                        k_name = pygame.key.name(event.key)
+                        if not mods and len(k_name) == 1:
+                            Relation.insert(pygame.key.name(event.key))
                 elif tab.visible == FUNC_TAB:
                     # shift key alternatives
                     if mods & KMOD_SHIFT:
@@ -873,8 +1184,8 @@ def main():
             elif event.type == MOUSEBUTTONDOWN:
                 # if mods & KMOD_SHIFT:
                 if event.button == 4:
-                    coor.scalex /= SCALE_RATIO
-                    coor.scaley /= SCALE_RATIO
+                    coor.scalex //= SCALE_RATIO
+                    coor.scaley //= SCALE_RATIO
                 elif event.button == 5:
                     coor.scalex *= SCALE_RATIO
                     coor.scaley *= SCALE_RATIO
@@ -908,6 +1219,8 @@ def main():
 
         for func in Func.family:
             func.draw()
+        for rela in Relation.family:
+            rela.draw()
 
         tab.show_tab()
 
@@ -997,4 +1310,5 @@ def quit_all(save=True):
     sys.exit()
 
 
-main()
+if __name__ == "__main__":
+    main()
