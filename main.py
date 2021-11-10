@@ -600,10 +600,7 @@ def evaluate2(x, y, exp, ori_x, ori_y, scalex, scaley):
     if e:
         x = (x - ori_x) / scalex
         y = (ori_y - y) / scaley
-    try:
-        return eval(exp)
-    except Exception:
-        return 0
+    return eval(exp)
 
 
 
@@ -809,9 +806,9 @@ class Relation(Func):
                     Relation._stroke_width,
                 )
         except SyntaxError:
-            pass
+            self.drawability = 0
         except NameError:
-            pass
+            self.drawability = 0
         except Exception:
             print(traceback.format_exc())
 
