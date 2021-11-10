@@ -1,2 +1,4 @@
 pyperclip
 pygame
+pyinstaller
+pylint
