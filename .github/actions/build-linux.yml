@@ -17,3 +17,7 @@ runs:
       mv dist/main ./main
       chmod +x main
       zip -r linux.zip main assets
+  - name: Clean up
+    run: |
+      rm -rf dist
+      rm -rf main

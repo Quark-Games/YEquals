@@ -13,7 +13,12 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
-
+    - name: Build linux
+      uses: ./.github/actions/build-linux
+    - name: Build mac
+      uses: ./.github/actions/build-mac
+    - name: Build windows
+      uses: ./.github/actions/build-windows
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"

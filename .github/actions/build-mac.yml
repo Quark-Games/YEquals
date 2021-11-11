@@ -16,3 +16,7 @@ runs:
       pyinstaller --onefile ./main.py
       mv dist/main ./main
       zip -r mac.zip main assets
+  - name: Clean up
+    run: |
+      rm -rf dist
+      rm -rf main
