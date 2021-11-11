@@ -55,7 +55,7 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "latest-stable"
-        title: "Latest"
+        title: "Latest Stable"
         prerelease: false
         files: |
           ubuntu-latest/ubuntu-latest.zip
@@ -67,7 +67,7 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "latest-experimental"
-        title: "Latest"
+        title: "Latest Experimental"
         prerelease: true
         files: |
           ubuntu-latest/ubuntu-latest.zip
