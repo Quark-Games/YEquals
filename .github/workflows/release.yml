@@ -1,31 +1,65 @@
-name: Release
-
-# on:
-#   push:
-#     branches: [ master ]
+name: Build and release
 
 on: push
-
+  
 jobs:
   build:
-    name: "Build and Release"
-    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
-    - name: Build linux
-      uses: ./.github/actions/build-linux
-    - name: Build mac
-      uses: ./.github/actions/build-mac
-    - name: Build windows
-      uses: ./.github/actions/build-windows
-    - uses: "marvinpinto/action-automatic-releases@latest"
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Build on unix
+      if: matrix.os != 'windows-latest'
+      run: |
+        pyinstaller --onefile ./main.py
+        mv dist/main ./main
+        chmod +x main
+        zip -r ${{ matrix.os }}.zip main assets
+    - name: Build on windows
+      if: matrix.os == 'windows-latest'
+      run: |
+        pyinstaller --onefile ./main.py
+        mv dist/main.exe ./main.exe
+        Compress-Archive main.exe windows-latest.zip
+        Compress-Archive assets -Update windows-latest.zip
+    - name: Cache build
+      uses: actions/cache@v2
+      with:
+        path: "${{ matrix.os }}.zip"
+        key: "${{ matrix.os }}"
+    - name: Upload build
+      uses: actions/upload-artifact@v2
+      with:
+        name: "${{ matrix.os }}"
+        path: "${{ matrix.os }}.zip"
+        retention-days: 1
+  release:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+    - name: Download builds
+      uses: actions/download-artifact@v2
+    - name: Release builds
+      uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest-experimental"
-        title: "Release"
+        automatic_release_tag: "latest"
+        title: "Latest"
         prerelease: true
         files: |
-          linux.zip
-          mac.zip
-          windows.zip
+          ubuntu-latest.zip
+          macos-latest.zip
+          windows-latest.zip
