@@ -50,7 +50,7 @@ jobs:
     - name: Download builds
       uses: actions/download-artifact@v2
     - name: Release stable builds
-      if: ${GITHUB_REF##*/} == 'master'
+      if: github.ref == 'refs/heads/master'
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
@@ -62,7 +62,7 @@ jobs:
           macos-latest/macos-latest.zip
           windows-latest/windows-latest.zip
     - name: Release experimental builds
-      if: ${GITHUB_REF##*/} == 'experimental'
+      if: github.ref == 'refs/heads/experimental'
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
