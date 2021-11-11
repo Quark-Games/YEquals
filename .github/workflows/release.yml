@@ -1,6 +1,6 @@
-name: Build and release
+name: Build and Release
 
-concurrency: build-and-release
+concurrency: build-and-release-${{ github.ref }}
 
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "latest-stable"
-        title: "Latest Stable"
+        title: "Latest Stable Release"
         prerelease: false
         files: |
           ubuntu-latest/ubuntu-latest.zip
@@ -69,7 +69,7 @@ jobs:
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "latest-experimental"
-        title: "Latest Experimental"
+        title: "Latest Experimental Release"
         prerelease: true
         files: |
           ubuntu-latest/ubuntu-latest.zip
