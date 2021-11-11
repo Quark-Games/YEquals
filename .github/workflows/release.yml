@@ -6,7 +6,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout Repository
@@ -33,11 +33,6 @@ jobs:
         mv dist/main.exe ./main.exe
         Compress-Archive main.exe windows-latest.zip
         Compress-Archive assets -Update windows-latest.zip
-    - name: Cache build
-      uses: actions/cache@v2
-      with:
-        path: "${{ matrix.os }}.zip"
-        key: "${{ matrix.os }}"
     - name: Upload build
       uses: actions/upload-artifact@v2
       with:
@@ -60,6 +55,6 @@ jobs:
         title: "Latest"
         prerelease: true
         files: |
-          ubuntu-latest.zip
-          macos-latest.zip
-          windows-latest.zip
+          ubuntu-latest/ubuntu-latest.zip
+          macos-latest/macos-latest.zip
+          windows-latest/windows-latest.zip
