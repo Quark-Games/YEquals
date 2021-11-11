@@ -1,6 +1,8 @@
 name: Build and release
 
-on: push
+on:
+  push:
+    branches: [master, experimental]
   
 jobs:
   build:
@@ -47,11 +49,24 @@ jobs:
       uses: actions/checkout@v2
     - name: Download builds
       uses: actions/download-artifact@v2
-    - name: Release builds
+    - name: Release stable builds
+      if: ${GITHUB_REF##*/} == 'master'
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest"
+        automatic_release_tag: "latest-stable"
+        title: "Latest"
+        prerelease: false
+        files: |
+          ubuntu-latest/ubuntu-latest.zip
+          macos-latest/macos-latest.zip
+          windows-latest/windows-latest.zip
+    - name: Release experimental builds
+      if: ${GITHUB_REF##*/} == 'experimental'
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest-experimental"
         title: "Latest"
         prerelease: true
         files: |
