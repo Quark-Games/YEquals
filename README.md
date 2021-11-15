@@ -12,7 +12,7 @@ The grapher has less functionality than Desmos or Grapher on Mac.
 
 ***
 
-# Shortcuts (best on Mac)
+# Shortcuts
 You can now access the list of shortcuts by moving your cursor over the Q-shape logo.
 
 ***
