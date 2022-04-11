@@ -22,8 +22,11 @@ DEBUG_FILE = os.path.join(INIT_DIR, "debug", "debug_{}.log".format(time()))
 if not os.path.exists(os.path.join(INIT_DIR, "debug")):
     os.makedirs(os.path.join(INIT_DIR, "debug"))
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename=DEBUG_FILE, level=logging.DEBUG,
-                    format="%(funcName)s:%(message)s")
+logging.basicConfig(
+    filename=DEBUG_FILE,
+    level=logging.DEBUG,
+    format="%(funcName)s:%(message)s",
+)
 
 # pygame display initiation
 pygame.init()
