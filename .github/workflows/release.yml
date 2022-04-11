@@ -63,6 +63,7 @@ jobs:
           ubuntu-latest/ubuntu-latest.zip
           macos-latest/macos-latest.zip
           windows-latest/windows-latest.zip
+          macos-10.15/macos-10.15.zip
     - name: Release experimental builds
       if: github.ref == 'refs/heads/experimental'
       uses: "marvinpinto/action-automatic-releases@latest"
@@ -75,3 +76,5 @@ jobs:
           ubuntu-latest/ubuntu-latest.zip
           macos-latest/macos-latest.zip
           windows-latest/windows-latest.zip
+          macos-10.15/macos-10.15.zip
+
