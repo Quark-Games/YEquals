@@ -4,13 +4,13 @@ concurrency: build-and-release-${{ github.ref }}
 
 on:
   push:
-    branches: [master, experimental]
+    branches: [master, experimental, development]
   
 jobs:
   build:
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest, macos-10.15]
+        os: [macos-latest, ubuntu-latest, windows-latest, macos-10.15, windows-2022, ubuntu-20.04, ubuntu-18.04, macos-11, windows-2019]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout Repository
@@ -24,14 +24,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Build on unix
-      if: matrix.os != 'windows-latest'
+      if: !contains( matrix.os, windows )
       run: |
         pyinstaller --onefile ./main.py
         mv dist/main ./main
         chmod +x main
         zip -r ${{ matrix.os }}.zip main assets
     - name: Build on windows
-      if: matrix.os == 'windows-latest'
+      if: contains( matrix.os, windows )
       run: |
         pyinstaller --onefile ./main.py
         mv dist/main.exe ./main.exe
@@ -40,7 +40,7 @@ jobs:
     - name: Upload build
       uses: actions/upload-artifact@v2
       with:
-        name: "${{ matrix.os }}"
+        name: "release"
         path: "${{ matrix.os }}.zip"
         retention-days: 1
   release:
@@ -60,10 +60,7 @@ jobs:
         title: "Latest Stable Release"
         prerelease: false
         files: |
-          ubuntu-latest/ubuntu-latest.zip
-          macos-latest/macos-latest.zip
-          windows-latest/windows-latest.zip
-          macos-10.15/macos-10.15.zip
+          release/*.zip
     - name: Release experimental builds
       if: github.ref == 'refs/heads/experimental'
       uses: "marvinpinto/action-automatic-releases@latest"
@@ -73,8 +70,15 @@ jobs:
         title: "Latest Experimental Release"
         prerelease: true
         files: |
-          ubuntu-latest/ubuntu-latest.zip
-          macos-latest/macos-latest.zip
-          windows-latest/windows-latest.zip
-          macos-10.15/macos-10.15.zip
+          release/*.zip
+    - name: Release development builds
+      if: github.ref == 'refs/heads/development'
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest-development"
+        title: "Latest Development Release"
+        prerelease: true
+        files: |
+          release/*.zip
 
