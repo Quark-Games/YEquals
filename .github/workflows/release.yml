@@ -61,34 +61,12 @@ jobs:
       uses: actions/checkout@v2
     - name: Download builds
       uses: actions/download-artifact@v2
-    - name: Release stable builds
-      if: github.ref == 'refs/heads/master'
+    - name: Release builds
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest-stable"
-        title: "Latest Stable Release"
-        prerelease: false
+        automatic_release_tag: "latest-${{ github.head_ref || github.ref_name }}"
+        title: "Latest ${{ github.head_ref || github.ref_name }} Release"
+        prerelease: ${{ ! contains( github.ref, 'master')}}
         files: |
           release/*.zip
-    - name: Release experimental builds
-      if: github.ref == 'refs/heads/experimental'
-      uses: "marvinpinto/action-automatic-releases@latest"
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest-experimental"
-        title: "Latest Experimental Release"
-        prerelease: true
-        files: |
-          release/*.zip
-    - name: Release development builds
-      if: github.ref == 'refs/heads/development'
-      uses: "marvinpinto/action-automatic-releases@latest"
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest-development"
-        title: "Latest Development Release"
-        prerelease: true
-        files: |
-          release/*.zip
-
