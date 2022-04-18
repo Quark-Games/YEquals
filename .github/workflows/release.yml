@@ -24,14 +24,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Build on unix
-      if: ${{ ! contains( matrix.os, "windows" ) }}
+      if: ${{ ! contains( matrix.os, 'windows' ) }}
       run: |
         pyinstaller --onefile ./main.py
         mv dist/main ./main
         chmod +x main
         zip -r ${{ matrix.os }}.zip main assets
     - name: Build on windows
-      if: ${{ contains( matrix.os, "windows" ) }}
+      if: ${{ contains( matrix.os, 'windows' ) }}
       run: |
         pyinstaller --onefile ./main.py
         mv dist/main.exe ./main.exe
