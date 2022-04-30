@@ -604,183 +604,6 @@ class Func:
         message.unindent()
 
 
-class Relation(Func):
-    limit = 8
-    family = []
-    active = None
-    _act_index = 0
-    _accuracy = 1
-    _stroke_width = 2
-
-    def __init__(self, exp):
-        if len(Relation.family) < Relation.limit:
-            self.exp = exp
-            self.cursor = len(exp)
-            self.visible = True
-            Relation.family.append(self)
-            Relation.set_act(len(Relation.family) - 1)
-            self.drawability = 0
-        else:
-            message.put_delayed(display, "Maximum graph exceeded")
-
-    def set_act(index):
-        if index == 'u':
-            if Relation._act_index > 0:
-                Relation._act_index -= 1
-                Relation.active = Relation.family[Relation._act_index]
-        elif index == 'd':
-            if Relation._act_index < len(Relation.family) - 1:
-                Relation._act_index += 1
-                Relation.active = Relation.family[Relation._act_index]
-        elif Relation.family:
-            Relation.active = Relation.family[index]
-            Relation._act_index = index
-        else:
-            Relation.active = None
-
-    def remove():
-        if Relation.family:
-            index = Relation.family.index(Relation.active)
-            Relation.family.remove(Relation.active)
-            if index == len(Relation.family):
-                Relation.set_act(index-1)
-            else:
-                Relation.set_act(index)
-        else:
-            message.put_delayed(display, "No graph expression to remove")
-
-    def move_cursor(move):
-        func = Relation.active
-        if move == -1:
-            if func.cursor > 0:
-                func.cursor -= 1
-        elif move == 1:
-            if func.cursor < len(func.exp):
-                func.cursor += 1
-        if move == -2:
-            if func.cursor > 0:
-                func.cursor = 0
-        elif move == 2:
-            if func.cursor < len(func.exp):
-                func.cursor = len(func.exp)
-
-    def insert(char):
-        if not Relation.active:
-            message.put_delayed(display, "No expression has been created")
-            return
-        func = Relation.active
-        if len(func.exp) > 25:
-            message.put_delayed(display, "Expression too long")
-            return
-        if char in CLOSE_PAREN:
-            if func.cursor <= len(func.exp) - 1:
-                if char == func.exp[func.cursor]:
-                    func.cursor += 1
-                    return
-        func.exp = func.exp[0:func.cursor] + char + func.exp[func.cursor:]
-        func.cursor += len(char)
-        if char in PARENTHESIS:
-            close = PARENTHESIS[char]
-            func.exp = func.exp[0:func.cursor] + close + func.exp[func.cursor:]
-
-    def delete():
-        if not Relation.active:
-            message.put_delayed(display, "No expression has been created")
-            return
-        func = Relation.active
-        if func.cursor != 0:
-            func.exp = func.exp[:func.cursor-1] + func.exp[func.cursor:]
-            func.cursor -= 1
-
-    def true_exp(self):
-        # exp_match = re.match(FULL_EXP, self.exp)
-        # if not exp_match:
-        #     exp = self.exp
-        # else:
-        #     exp = exp_match.group("exp")
-        #     domain = exp_match.group("domain")
-        #     for switch in SWITCH:
-        #         domain = domain.replace(switch[0], switch[1])
-
-        # for switch in SWITCH:
-        #     exp = exp.replace(switch[0], switch[1])
-        # while re.findall(COE_PAIR, exp):
-        #     for pair in set(re.findall(COE_PAIR, exp)):
-        #         exp = exp.replace(pair, pair[0] + '*' + pair[1])
-
-        # if not exp_match:
-        #     return exp
-        # else:
-        #     return exp, domain
-        
-        # TODO: fix this
-        return self.exp
-
-    def draw(self):
-        true_exp = self.true_exp()
-        if self.visible:
-            if type(true_exp) == str:
-                if '±' not in true_exp:
-                    self.graph(true_exp)
-                else:
-                    message.indent()
-                    self.graph(true_exp.replace('±', '+'))
-                    self.graph(true_exp.replace('±', '-'))
-                    message.unindent()
-            else:
-                exp, domain = true_exp
-                if '±' not in exp:
-                    self.graph(exp, domain)
-                else:
-                    message.indent()
-                    self.graph(exp.replace('±', '+'), domain)
-                    self.graph(exp.replace('±', '-'), domain)
-                    message.unindent()
-
-    def graph(self, exp, domain="True"):
-        # calculate pairs
-        pairs = src.yeval.xyre(exp, coor)
-
-        # check for errors
-        if pairs is None:
-            return
-
-        # loop through coordinate pairs
-        for pair in pairs:
-
-            # draw line
-            pygame.draw.line(display, BLACK, *pair, Relation._stroke_width)
-
-        # return
-        return
-
-    def show(self):
-        # display expression
-        if pygame.key.get_pressed()[K_TAB]:
-            message.put(display, str(self.true_exp()))
-        else:
-            if Relation.active == self:
-                message.put(
-                    display,
-                    self.exp[:self.cursor] +
-                    '|' + self.exp[self.cursor:],
-                )
-            else:
-                message.put(display, self.exp)
-
-        # display graph status
-        if not self.visible:
-            msg = "the graph is set to invisible"
-        elif not self.drawability:
-            msg = "the graph is not drawable"
-        elif self.drawability != display_width * Relation._accuracy + 1:
-            msg = "the graph is not consistent"
-        else:
-            msg = "the graph is consistent in view"
-        message.indent()
-        message.put(display, msg)
-        message.unindent()
-
 class Tab:
     width = 300
 
@@ -809,8 +632,6 @@ class Tab:
             self.var_tab()
         elif tab.visible == VIEW_TAB:
             self.view_tab()
-        elif tab.visible == RELA_TAB:
-            self.rela_tab()
         if tab.visible:
             display.blit(tab_banner_img, (0, 0))
 
@@ -832,15 +653,6 @@ class Tab:
         pygame.draw.rect(display,
                         LIGHT_YELLOW,
                         (0, 0, Tab.width, display_height))
-    
-    def rela_tab(self):
-        pygame.draw.rect(
-            display,
-            LIGHT_RED,
-            (0, 0, Tab.width, display_height),
-        )
-        for rela in Relation.family:
-            rela.show()
 
     def resize_win(self, w, h):
         global display_width, display_height
@@ -900,7 +712,6 @@ def main():
         message.reset()
         func = Func.active
         var = Var.active
-        rela = Relation.active
         corner = pygame.Rect(display_width - 45, 0, 45, 36)
 
         # pygame event controls
@@ -1154,8 +965,6 @@ def main():
 
         for func in Func.family:
             func.draw()
-        for rela in Relation.family:
-            rela.draw()
 
         tab.show_tab()
 
