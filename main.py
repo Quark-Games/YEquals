@@ -8,11 +8,11 @@ import pyperclip
 import re
 import sys
 from time import time
-from extlib import sgn, sgn0
 import traceback
 import functools
 
 import src
+from src.extlib import sgn, sgn0
 
 # change directory to assests
 INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))

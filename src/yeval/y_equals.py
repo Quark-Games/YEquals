@@ -4,7 +4,7 @@ y_equals.py
 includes y_equals
 """
 
-import math
+from math import *
 from ..common import DISPLAY_WIDTH
 
 
