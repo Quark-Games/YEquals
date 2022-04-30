@@ -8,10 +8,11 @@ import pyperclip
 import re
 import sys
 from time import time
-from extlib import sgn, sgn0
 import traceback
 import functools
 
+import src
+from src.extlib import sgn, sgn0
 
 # change directory to assests
 INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -59,6 +60,7 @@ LIGHT_YELLOW = (255, 255, 153)
 FUNC_TAB = 1
 VAR_TAB = 2
 VIEW_TAB = 3
+RELA_TAB = 4
 
 VAR_EXP_MATCH = 0
 VAR_EXP_NAME = 1
@@ -223,19 +225,22 @@ class Coordinate:
     def axis(self):
         if self.axis_show:
             pygame.draw.line(display,
-                             RED,
-                             (0, self.origin[1]),
-                             (display_width, self.origin[1]),
-                             Coordinate._stroke_width)
+                            RED,
+                            (0, self.origin[1]),
+                            (display_width, self.origin[1]),
+                            Coordinate._stroke_width)
             pygame.draw.line(display,
-                             RED,
-                             (self.origin[0], 0),
-                             (self.origin[0], display_height),
-                             Coordinate._stroke_width)
+                            RED,
+                            (self.origin[0], 0),
+                            (self.origin[0], display_height),
+                            Coordinate._stroke_width)
 
     def grid(self):
         if not self.grid_show:
             return
+
+        def sig_figure(x, fig):
+            return round(x, fig - int(floor(log10(abs(x)))) - 1)
 
         # initiate value
         ori_x, ori_y = map(int, coor.origin)
@@ -250,10 +255,10 @@ class Coordinate:
         # draw grid
         for line_x in range((ori_x - left_lim) % gap_px + left_lim, display_width, gap_px):
             pygame.draw.line(display,
-                             GREY,
-                             (line_x, 0),
-                             (line_x, display_height),
-                             Coordinate._stroke_width)
+                            GREY,
+                            (line_x, 0),
+                            (line_x, display_height),
+                            Coordinate._stroke_width)
             val = (line_x - ori_x) / coor.scalex
             if val != 0:
                 val = sig_figure(val, 2)
@@ -262,10 +267,10 @@ class Coordinate:
                 message.label(line_x, label_y, 0)
         for line_y in range(ori_y % gap_py, display_height, gap_py):
             pygame.draw.line(display,
-                             GREY,
-                             (0, line_y),
-                             (display_width, line_y),
-                             Coordinate._stroke_width)
+                            GREY,
+                            (0, line_y),
+                            (display_width, line_y),
+                            Coordinate._stroke_width)
             val = (ori_y - line_y) / coor.scaley
             if val != 0:
                 val = sig_figure(val, 2)
@@ -545,31 +550,32 @@ class Func:
                     message.unindent()
 
     def graph(self, exp, domain="True"):
-        # draw graph of the expression
-        old_pos = (-1, -1)
-        drawability = display_width * Func._accuracy + 1
-        for vname, value in Var.vars.items():
-            exec("{0} = {1}".format(vname, value))
+        self.drawability = 1
 
-        for raw_x in range(-1, drawability - 1):
-            try:
-                pixel_x = raw_x / Func._accuracy
-                x = (pixel_x - coor.origin[0]) / coor.scalex
-                y = eval(exp)
-                pixel_y = coor.origin[1] - y * coor.scaley
-                temp = 0 < old_pos[1] < display_height
-                temp = temp or 0 < pixel_y < display_height
-                temp = temp and eval(domain)
-                if pixel_x - old_pos[0] <= 1 and temp:
-                    pygame.draw.line(display,
-                                     BLACK,
-                                     old_pos,
-                                     (round(pixel_x), round(pixel_y)),
-                                     Func._stroke_width)
-                old_pos = (round(pixel_x), round(pixel_y))
-            except Exception:
-                drawability -= 1
-        self.drawability = drawability
+        # check if the expression is function or relation
+        if len(exp.split('=')) != 2:
+            self.drawability = 0
+            return
+        pairs = None
+        if 'y' in exp.split('=')[0:2]:
+            exp = exp.split('=')[1] if  'y' == exp.split('=')[0] else exp.split('=')[0]
+            if 'y' not in exp:
+                pairs = src.yeval.y_equals(exp, coor)
+        if not pairs:
+            pairs = src.yeval.xyre(exp, coor)
+
+        # check for errors
+        if pairs is None:
+            return
+
+        # loop through coordinate pairs
+        for pair in pairs:
+
+            # draw line
+            pygame.draw.line(display, BLACK, *pair, Func._stroke_width)
+
+        # return
+        return
 
     def show(self):
         # display expression
@@ -577,11 +583,12 @@ class Func:
             message.put(display, "y = " + str(self.true_exp()))
         else:
             if Func.active == self:
-                message.put(display,
-                            "y = " + self.exp[:self.cursor] +
-                            '|' + self.exp[self.cursor:])
+                message.put(
+                    display,
+                    f"{self.exp[:self.cursor]}|{self.exp[self.cursor:]}"
+                )
             else:
-                message.put(display, "y = " + self.exp)
+                message.put(display, self.exp)
 
         # display graph status
         if not self.visible:
@@ -630,22 +637,22 @@ class Tab:
 
     def func_tab(self):
         pygame.draw.rect(display,
-                         LIGHT_BLUE,
-                         (0, 0, Tab.width, display_height))
+                        LIGHT_BLUE,
+                        (0, 0, Tab.width, display_height))
         for func in Func.family:
             func.show()
 
     def var_tab(self):
         pygame.draw.rect(display,
-                         LIGHT_GREEN,
-                         (0, 0, Tab.width, display_height))
+                        LIGHT_GREEN,
+                        (0, 0, Tab.width, display_height))
         for var in Var.family:
             var.show()
 
     def view_tab(self):
         pygame.draw.rect(display,
-                         LIGHT_YELLOW,
-                         (0, 0, Tab.width, display_height))
+                        LIGHT_YELLOW,
+                        (0, 0, Tab.width, display_height))
 
     def resize_win(self, w, h):
         global display_width, display_height
@@ -666,14 +673,6 @@ data = File(os.path.join(ASSETS, "data.p"))
 message = Message()
 coor = Coordinate()
 tab = Tab()
-
-
-def sig_figure(x, fig):
-    # print(x, fig, int(floor(log10(abs(x)))), round(x, fig - int(floor(log10(abs(x)))) - 1))
-    # return round(x, fig + 2 * abs(int(floor(log10(abs(x))))) - 1)
-    # return int(x * 10 ** (-int(floor(log10(abs(x))))) * 10 ** fig) / (10 ** (-int(floor(log10(abs(x))))) * 10 ** fig)
-    # return int(x * 10 ** fig) / 10 ** fig
-    return round(x, fig - int(floor(log10(abs(x)))) - 1)
 
 
 def is_int(literal):
@@ -721,8 +720,11 @@ def main():
             if event.type == QUIT:
                 quit_all()
             mods = pygame.key.get_mods()
+
+            # if key press
             if event.type == KEYDOWN:
-                # keyboard shortcuts with modifiers
+
+                # cmd / ctrl + shift
                 if (mods & KMOD_META and mods & KMOD_SHIFT) or (mods & KMOD_CTRL and mods & KMOD_SHIFT):
                     if event.key == K_MINUS:
                         coor.scalex /= SCALE_RATIO
@@ -732,6 +734,8 @@ def main():
                         coor.scaley *= SCALE_RATIO
                     elif event.key == K_c:
                         File.screenshot()
+
+                # cmd / ctrl
                 elif (mods & KMOD_META) or (mods & KMOD_CTRL):
                     if event.key == K_q:
                         quit_all()
@@ -746,17 +750,22 @@ def main():
                     elif event.key == K_0:
                         coor.scalex, coor.scaley = SCALE_DX, SCALE_DY
                         if tab.visible:
-                            coor.origin = [display_width / 2 + Tab.width / 2,
-                                           display_height / 2]
+                            coor.origin = [
+                                display_width / 2 + Tab.width / 2,
+                                display_height / 2,
+                            ]
                         else:
-                            coor.origin = [display_width/2, display_height/2]
+                            coor.origin = [
+                                display_width/2,
+                                display_height/2,
+                            ]
                     elif event.key == K_9:
                         ave = (coor.scalex + coor.scaley) / 2
                         coor.scalex, coor.scaley = ave, ave
                     elif event.key == K_8:
                         if tab.visible:
                             coor.origin = [display_width / 2 + Tab.width / 2,
-                                           display_height / 2]
+                                        display_height / 2]
                         else:
                             coor.origin = [display_width/2, display_height/2]
                     elif event.key == K_BACKSPACE:
@@ -876,8 +885,8 @@ def main():
             elif event.type == MOUSEBUTTONDOWN:
                 # if mods & KMOD_SHIFT:
                 if event.button == 4:
-                    coor.scalex /= SCALE_RATIO
-                    coor.scaley /= SCALE_RATIO
+                    coor.scalex //= SCALE_RATIO
+                    coor.scaley //= SCALE_RATIO
                 elif event.button == 5:
                     coor.scalex *= SCALE_RATIO
                     coor.scaley *= SCALE_RATIO
