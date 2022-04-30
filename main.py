@@ -14,11 +14,11 @@ import functools
 
 
 # change directory to assests
-INIT_DIR = os.path.dirname(os.path.abspath(__file__))
+INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 ASSETS = os.path.join(INIT_DIR, 'assets')
 
 # logger initiation
-DEBUG_FILE = os.path.join(INIT_DIR, "debug", "debug_{}.log".format(time()))
+DEBUG_FILE = os.path.join(INIT_DIR, "debug", f"debug_{time()}.log")
 if not os.path.exists(os.path.join(INIT_DIR, "debug")):
     os.makedirs(os.path.join(INIT_DIR, "debug"))
 logger = logging.getLogger(__name__)
@@ -160,10 +160,10 @@ class File:
                 for var in Var.family:
                     var.exp = var.exp
                 Var.active = Var.family[Var._act_index]
-            logger.info("File {} is properly loaded".format(self.fname))
-        except Exception:
+            logger.info("File %s is properly loaded", self.fname)
+        except Exception as e:
             message.put_delayed(display, "Error occured while loading data")
-            logger.error("File {} is not properly loaded".format(self.fname))
+            logger.error("File %s is not properly loaded", self.fname)
 
     def put(self):
         try:
@@ -176,10 +176,10 @@ class File:
                 pickle.dump(coor.origin, f)
                 pickle.dump(coor.axis_show, f)
                 pickle.dump(coor.grid_show, f)
-            logger.info("File {} properly saved".format(self.fname))
+            logger.info("File %s properly saved", self.fname)
         except Exception as e:
             message.put_delayed(display, "Error occured while saving data")
-            logger.error("File {} not properly saved".format(self.fname))
+            logger.error("File %s not properly saved", self.fname)
 
     def screenshot():
         pygame.image.save(display, SS_PATH)
