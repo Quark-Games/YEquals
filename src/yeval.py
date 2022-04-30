@@ -69,8 +69,8 @@ def y_equals(s:str, coor) -> tuple:
         # if there is an error
         except Exception:
 
-                # set old coordinate pair to None
-                old_coord = None
+            # set old coordinate pair to None
+            old_coord = None
 
     # return output tuple
     return tuple(output)
@@ -105,7 +105,10 @@ def xyre(s:str, coor) -> tuple:
         for x in range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH, gap_px):
             matrix.append([])
             for y in range(ori_y % gap_py, DISPLAY_HEIGHT, gap_py):
-                matrix[-1].append(evaluate2(x, y, r[0], ori_x, ori_y, coor.scalex, coor.scaley) - evaluate2(x, y, r[1], ori_x, ori_y, coor.scalex, coor.scaley))
+                matrix[-1].append(
+                    evaluate2(x, y, r[0], ori_x, ori_y, coor.scalex, coor.scaley) -
+                    evaluate2(x, y, r[1], ori_x, ori_y, coor.scalex, coor.scaley)
+                )
         # compute
         points = []
         for mx, x in enumerate(range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH - gap_px, gap_px)):
