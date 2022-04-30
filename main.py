@@ -778,8 +778,6 @@ def main():
                             Func('')
                         elif tab.visible == VAR_TAB:
                             Var('')
-                        elif tab.visible == RELA_TAB:
-                            Relation('')
                     elif event.key == K_1:
                         if tab.visible == FUNC_TAB:
                             tab.visible = None
@@ -795,11 +793,6 @@ def main():
                             tab.visible = None
                         else:
                             tab.visible = VIEW_TAB
-                    elif event.key == K_4:
-                        if tab.visible == RELA_TAB:
-                            tab.visible = None
-                        else:
-                            tab.visible = RELA_TAB
                     elif event.key == K_a:
                         coor.axis_show = not coor.axis_show
                     elif event.key == K_g:
@@ -817,44 +810,6 @@ def main():
                         Func.move_cursor(2)
                 elif not tab.visible:
                     pass
-                elif tab.visible == RELA_TAB:
-                    # shift key alternatives
-                    if mods & KMOD_SHIFT:
-                        for shift in SHIFTS:
-                            if event.key == shift[0]:
-                                Relation.insert(shift[1])
-                    # alt key alternatives
-                    elif mods & KMOD_ALT:
-                        for alt in ALTS:
-                            if event.key == alt[0]:
-                                Relation.insert(alt[1])
-                    # single key shortcuts
-                    elif event.key == K_BACKSPACE:
-                        if rela:
-                            Relation.delete()
-                    elif event.key == K_LEFT:
-                        Relation.move_cursor(-1)
-                    elif event.key == K_RIGHT:
-                        Relation.move_cursor(1)
-                    elif event.key == K_UP:
-                        Relation.set_act('u')
-                    elif event.key == K_DOWN:
-                        Relation.set_act('d')
-                    elif event.key == K_RETURN:
-                        if not Relation.active:
-                            message.put_delayed(
-                                display,
-                                "No expression available",
-                            )
-                        else:
-                            rela.visible = not rela.visible
-                    elif event.key == K_SPACE:
-                        Relation.insert(' ')
-                    # basic input
-                    else:
-                        k_name = pygame.key.name(event.key)
-                        if not mods and len(k_name) == 1:
-                            Relation.insert(pygame.key.name(event.key))
                 elif tab.visible == FUNC_TAB:
                     # shift key alternatives
                     if mods & KMOD_SHIFT:
