@@ -21,14 +21,20 @@ jobs:
           windows-2022,
           windows-latest,
         ]
+        py: [
+          "3.10",
+          "3.9",
+          "3.8",
+          "3.7",
+        ]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
-    - name: Set up Python 3.10
+    - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: "3.10"
+        python-version: ${{ matrix.py }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -39,19 +45,19 @@ jobs:
         pyinstaller --onefile ./main.py
         mv dist/main ./main
         chmod +x main
-        zip -r ${{ matrix.os }}.zip main assets
+        zip -r ${{ matrix.os }}-${{ matrix.py }}.zip main assets
     - name: Build on windows
       if: ${{ contains( matrix.os, 'windows' ) }}
       run: |
         pyinstaller --onefile ./main.py
         mv dist/main.exe ./main.exe
-        Compress-Archive main.exe ${{ matrix.os }}.zip
-        Compress-Archive assets -Update ${{ matrix.os }}.zip
+        Compress-Archive main.exe ${{ matrix.os }}-${{ matrix.py }}.zip
+        Compress-Archive assets -Update ${{ matrix.os }}-${{ matrix.py }}.zip
     - name: Upload build
       uses: actions/upload-artifact@v2
       with:
         name: "release"
-        path: "${{ matrix.os }}.zip"
+        path: "${{ matrix.os }}-${{ matrix.py }}.zip"
         retention-days: 1
   release:
     runs-on: ubuntu-latest

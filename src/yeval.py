@@ -5,6 +5,7 @@ includes various methods for calculating what to draw.
 """
 
 import functools
+import sys
 from inspect import trace
 import traceback
 from math import *
@@ -15,13 +16,19 @@ from .extlib import sgn0
 def sig_figure(x, fig):
     return round(x, fig - int(floor(log10(abs(x)))) - 1)
 
-
-@functools.cache
-def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
-    if e:
-        x = (x - ori_x) / scalex
-        y = (ori_y - y) / scaley
-    return eval(s)
+if sys.version_info[1] >= 9:
+    @functools.cache
+    def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
+        if e:
+            x = (x - ori_x) / scalex
+            y = (ori_y - y) / scaley
+        return eval(s)
+else:
+    def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
+        if e:
+            x = (x - ori_x) / scalex
+            y = (ori_y - y) / scaley
+        return eval(s)
 
 
 def y_equals(s:str, coor) -> tuple:
