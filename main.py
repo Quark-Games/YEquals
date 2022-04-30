@@ -239,6 +239,9 @@ class Coordinate:
         if not self.grid_show:
             return
 
+        def sig_figure(x, fig):
+            return round(x, fig - int(floor(log10(abs(x)))) - 1)
+
         # initiate value
         ori_x, ori_y = map(int, coor.origin)
         gap_x, gap_y = SCALE_DX / coor.scalex, SCALE_DY / coor.scaley
@@ -547,16 +550,17 @@ class Func:
                     message.unindent()
 
     def graph(self, exp, domain="True"):
+        self.drawability = 1
 
         # calculate pairs
-        pairs = src.yeval.y_equals.y_equals(exp, coor)
+        pairs = src.yeval.y_equals(exp, coor)
 
         # check for errors
         if pairs is None:
             return
 
         # loop through coordinate pairs
-        for pair in src.yeval.y_equals.y_equals(exp, coor):
+        for pair in pairs:
 
             # draw line
             pygame.draw.line(display, BLACK, *pair, Func._stroke_width)
@@ -588,15 +592,6 @@ class Func:
         message.indent()
         message.put(display, msg)
         message.unindent()
-
-
-@functools.cache
-def evaluate2(x, y, exp, ori_x, ori_y, scalex, scaley):
-    if e:
-        x = (x - ori_x) / scalex
-        y = (ori_y - y) / scaley
-    return eval(exp)
-
 
 
 class Relation(Func):
@@ -733,82 +728,21 @@ class Relation(Func):
                     message.unindent()
 
     def graph(self, exp, domain="True"):
-        if list(exp).count("=") != 1:
-            self.drawability = 0
+        # calculate pairs
+        pairs = src.yeval.xyre(exp, coor)
+
+        # check for errors
+        if pairs is None:
             return
-        self.drawability = 1
-        
-        # draw graph of the relation
-        # initiate value
-        ori_x, ori_y = map(int, coor.origin)
-        gap_x, gap_y = SCALE_DX / coor.scalex, SCALE_DY / coor.scaley
-        # print(coor.origin)
-        gap_x = sig_figure(gap_x, 2)
-        gap_y = sig_figure(gap_y, 2)
-        gap_px = int(gap_x * coor.scalex) // 5
-        gap_py = int(gap_y * coor.scaley) // 5
-        left_lim = Tab.width if tab.visible else 0
-    
 
-        # compute matrix
-        try:
-            # sanity check
-            r = tuple(exp.split("="))
-            evaluate2(0, 0, r[0], ori_x, ori_y, coor.scalex, coor.scaley)
-            evaluate2(0, 0, r[1], ori_x, ori_y, coor.scalex, coor.scaley)
-            
-            # compute matrix
-            matrix = []
-            for x in range((ori_x - left_lim) % gap_px + left_lim, display_width, gap_px):
-                matrix.append([])
-                for y in range(ori_y % gap_py, display_height, gap_py):
-                    matrix[-1].append(evaluate2(x, y, r[0], ori_x, ori_y, coor.scalex, coor.scaley) - evaluate2(x, y, r[1], ori_x, ori_y, coor.scalex, coor.scaley))
-            # compute
-            points = []
-            for mx, x in enumerate(range((ori_x - left_lim) % gap_px + left_lim, display_width - gap_px, gap_px)):
-                for my, y in enumerate(range(ori_y % gap_py, display_height - gap_py, gap_py)):
-                    # pygame.draw.rect(display, BLACK, (x, y, 10, 10), 1)
-                    temp = []
-                    if sgn0(matrix[mx][my]) != sgn0(matrix[mx+1][my]):
-                        temp.append((
-                            x + gap_px * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx+1][my])),
-                            y,
-                        ))
-                    if sgn0(matrix[mx][my]) != sgn0(matrix[mx][my+1]):
-                        temp.append((
-                            x,
-                            y + gap_py * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx][my+1])),
-                        ))
-                    if sgn0(matrix[mx+1][my]) != sgn0(matrix[mx+1][my+1]):
-                        temp.append((
-                            x + gap_px,
-                            y + gap_py * abs(matrix[mx+1][my]) / (abs(matrix[mx+1][my]) + abs(matrix[mx+1][my+1])),
-                        ))
-                    if sgn0(matrix[mx][my+1]) != sgn0(matrix[mx+1][my+1]):
-                        temp.append((
-                            x + gap_px * abs(matrix[mx][my+1]) / (abs(matrix[mx][my+1]) + abs(matrix[mx+1][my+1])),
-                            y + gap_py,
-                        ))
-                    if len(temp) == 2:
-                        points.append(((int(temp[0][0]), int(temp[0][1])), (int(temp[1][0]), int(temp[1][1]))))
+        # loop through coordinate pairs
+        for pair in pairs:
 
-            for point in points:
-                pygame.draw.line(
-                    display,
-                    BLACK,
-                    point[0],
-                    point[1],
-                    Relation._stroke_width,
-                )
-        except SyntaxError:
-            self.drawability = 0
-        except NameError:
-            self.drawability = 0
-        except TypeError:
-            self.drawability = 0
-        except Exception:
-            self.drawability = 0
-            print(traceback.format_exc())
+            # draw line
+            pygame.draw.line(display, BLACK, *pair, Relation._stroke_width)
+
+        # return
+        return
 
     def show(self):
         # display expression
@@ -917,10 +851,6 @@ data = File(os.path.join(ASSETS, "data.p"))
 message = Message()
 coor = Coordinate()
 tab = Tab()
-
-
-def sig_figure(x, fig):
-    return round(x, fig - int(floor(log10(abs(x)))) - 1)
 
 
 def is_int(literal):
