@@ -12,6 +12,7 @@ from extlib import sgn, sgn0
 import traceback
 import functools
 
+import src
 
 # change directory to assests
 INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -546,31 +547,22 @@ class Func:
                     message.unindent()
 
     def graph(self, exp, domain="True"):
-        # draw graph of the expression
-        old_pos = (-1, -1)
-        drawability = display_width * Func._accuracy + 1
-        for vname, value in Var.vars.items():
-            exec("{0} = {1}".format(vname, value))
 
-        for raw_x in range(-1, drawability - 1):
-            try:
-                pixel_x = raw_x / Func._accuracy
-                x = (pixel_x - coor.origin[0]) / coor.scalex
-                y = eval(exp)
-                pixel_y = coor.origin[1] - y * coor.scaley
-                temp = 0 < old_pos[1] < display_height
-                temp = temp or 0 < pixel_y < display_height
-                temp = temp and eval(domain)
-                if pixel_x - old_pos[0] <= 1 and temp:
-                    pygame.draw.line(display,
-                                    BLACK,
-                                    old_pos,
-                                    (round(pixel_x), round(pixel_y)),
-                                    Func._stroke_width)
-                old_pos = (round(pixel_x), round(pixel_y))
-            except Exception:
-                drawability -= 1
-        self.drawability = drawability
+        # calculate pairs
+        pairs = src.yeval.y_equals.y_equals(exp, coor)
+
+        # check for errors
+        if pairs is None:
+            return
+
+        # loop through coordinate pairs
+        for pair in src.yeval.y_equals.y_equals(exp, coor):
+
+            # draw line
+            pygame.draw.line(display, BLACK, *pair, Func._stroke_width)
+
+        # return
+        return
 
     def show(self):
         # display expression
