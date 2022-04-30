@@ -552,8 +552,17 @@ class Func:
     def graph(self, exp, domain="True"):
         self.drawability = 1
 
-        # calculate pairs
-        pairs = src.yeval.y_equals(exp, coor)
+        # check if the expression is function or relation
+        if len(exp.split('=')) != 2:
+            self.drawability = 0
+            return
+        pairs = None
+        if 'y' in exp.split('=')[0:2]:
+            exp = exp.split('=')[1] if  'y' == exp.split('=')[0] else exp.split('=')[0]
+            if 'y' not in exp:
+                pairs = src.yeval.y_equals(exp, coor)
+        if not pairs:
+            pairs = src.yeval.xyre(exp, coor)
 
         # check for errors
         if pairs is None:
@@ -574,11 +583,12 @@ class Func:
             message.put(display, "y = " + str(self.true_exp()))
         else:
             if Func.active == self:
-                message.put(display,
-                            "y = " + self.exp[:self.cursor] +
-                            '|' + self.exp[self.cursor:])
+                message.put(
+                    display,
+                    f"{self.exp[:self.cursor]}|{self.exp[self.cursor:]}"
+                )
             else:
-                message.put(display, "y = " + self.exp)
+                message.put(display, self.exp)
 
         # display graph status
         if not self.visible:
