@@ -813,7 +813,7 @@ class Relation(Func):
     def show(self):
         # display expression
         if pygame.key.get_pressed()[K_TAB]:
-            message.put(display, "y = " + str(self.true_exp()))
+            message.put(display, str(self.true_exp()))
         else:
             if Relation.active == self:
                 message.put(
@@ -822,7 +822,7 @@ class Relation(Func):
                     '|' + self.exp[self.cursor:],
                 )
             else:
-                message.put(display, "y = " + self.exp)
+                message.put(display, self.exp)
 
         # display graph status
         if not self.visible:
