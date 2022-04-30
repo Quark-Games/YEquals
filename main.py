@@ -14,7 +14,7 @@ import functools
 
 
 # change directory to assests
-INIT_DIR = os.path.dirname(os.path.abspath(__file__))
+INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 ASSETS = os.path.join(INIT_DIR, 'assets')
 
 # logger initiation
