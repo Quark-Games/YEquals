@@ -6,8 +6,6 @@ includes various methods for calculating what to draw.
 
 import functools
 import sys
-from inspect import trace
-import traceback
 from math import *
 from .common import DISPLAY_WIDTH, DISPLAY_HEIGHT, SCALE_DX, SCALE_DY
 from .extlib import sgn0
@@ -118,33 +116,40 @@ def xyre(s:str, coor) -> tuple:
                 )
         # compute
         points = []
-        for mx, x in enumerate(range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH - gap_px, gap_px)):
+        for mx, x in enumerate(
+            range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH - gap_px, gap_px)
+        ):
             for my, y in enumerate(range(ori_y % gap_py, DISPLAY_HEIGHT - gap_py, gap_py)):
                 temp = []
                 if sgn0(matrix[mx][my]) != sgn0(matrix[mx+1][my]):
                     temp.append((
-                        x + gap_px * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx+1][my])),
+                        x + gap_px * abs(matrix[mx][my]) /
+                        (abs(matrix[mx][my]) + abs(matrix[mx+1][my])),
                         y,
                     ))
                 if sgn0(matrix[mx][my]) != sgn0(matrix[mx][my+1]):
                     temp.append((
                         x,
-                        y + gap_py * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx][my+1])),
+                        y + gap_py * abs(matrix[mx][my]) /
+                        (abs(matrix[mx][my]) + abs(matrix[mx][my+1])),
                     ))
                 if sgn0(matrix[mx+1][my]) != sgn0(matrix[mx+1][my+1]):
                     temp.append((
                         x + gap_px,
-                        y + gap_py * abs(matrix[mx+1][my]) / (abs(matrix[mx+1][my]) + abs(matrix[mx+1][my+1])),
+                        y + gap_py * abs(matrix[mx+1][my]) /
+                        (abs(matrix[mx+1][my]) + abs(matrix[mx+1][my+1])),
                     ))
                 if sgn0(matrix[mx][my+1]) != sgn0(matrix[mx+1][my+1]):
                     temp.append((
-                        x + gap_px * abs(matrix[mx][my+1]) / (abs(matrix[mx][my+1]) + abs(matrix[mx+1][my+1])),
+                        x + gap_px * abs(matrix[mx][my+1]) /
+                        (abs(matrix[mx][my+1]) + abs(matrix[mx+1][my+1])),
                         y + gap_py,
                     ))
                 if len(temp) == 2:
-                    points.append(((int(temp[0][0]), int(temp[0][1])), (int(temp[1][0]), int(temp[1][1]))))
+                    points.append(
+                        ((int(temp[0][0]), int(temp[0][1])), (int(temp[1][0]), int(temp[1][1])))
+                    )
 
         return points
-    except Exception as e:
-        # print(traceback.format_exc())
+    except Exception:
         pass
