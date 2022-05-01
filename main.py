@@ -1,6 +1,6 @@
+import math
 import pygame
 import logging
-from math import *
 from modkeys import *
 import os
 import pickle
@@ -12,7 +12,6 @@ import traceback
 import functools
 
 import src
-from src.extlib import sgn, sgn0
 
 # change directory to assests
 INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -240,7 +239,7 @@ class Coordinate:
             return
 
         def sig_figure(x, fig):
-            return round(x, fig - int(floor(log10(abs(x)))) - 1)
+            return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
 
         # initiate value
         ori_x, ori_y = map(int, coor.origin)
