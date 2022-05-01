@@ -5,31 +5,24 @@ includes various methods for calculating what to draw.
 """
 
 import functools
+import math
 import sys
-from math import *
 from .common import DISPLAY_WIDTH, DISPLAY_HEIGHT, SCALE_DX, SCALE_DY
-from .extlib import sgn0
+from .seval import seval, sgn0
 
 
 def sig_figure(x, fig):
-    return round(x, fig - int(floor(log10(abs(x)))) - 1)
+    return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
+
+def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
+    x = (x - ori_x) / scalex
+    y = (ori_y - y) / scaley
+    return seval(s, x=x, y=y)
 
 if sys.version_info[1] >= 9:
-    @functools.cache
-    def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
-        if e:
-            x = (x - ori_x) / scalex
-            y = (ori_y - y) / scaley
-        return eval(s)
-else:
-    def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
-        if e:
-            x = (x - ori_x) / scalex
-            y = (ori_y - y) / scaley
-        return eval(s)
+    evaluate2 = functools.cache(evaluate2)
 
-
-def y_equals(s:str, coor) -> tuple:
+def y_equals(string:str, coor) -> tuple:
     """
     given a function string, return a tuple of line coordinate pairs
     """
@@ -48,7 +41,7 @@ def y_equals(s:str, coor) -> tuple:
             x = (x_disp - coor.origin[0]) / coor.scalex
 
             # calculate y value
-            y = eval(s)
+            y = seval(string, x=x)
 
             # convert y value to display coordinates
             y_raw = coor.origin[1] - y * coor.scaley

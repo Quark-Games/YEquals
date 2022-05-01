@@ -1,6 +1,6 @@
 Shortcuts
 >>> General <<<
-  (Command | Control) & 1/2/3/4 - switch between tabs
+  (Command | Control) & 1/2/3 - switch between tabs
   (Command | Control) & A - show/hide axis
   (Command | Control) & G - show/hide grid system (grid function in beta)
   (Command | Control) & Shift & C - capture screenshot (save to Desktop)
