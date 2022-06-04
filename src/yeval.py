@@ -14,15 +14,18 @@ from .seval import seval, sgn0
 def sig_figure(x, fig):
     return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
 
+
 def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
     x = (x - ori_x) / scalex
     y = (ori_y - y) / scaley
     return seval(s, x=x, y=y)
 
+
 if sys.version_info[1] >= 9:
     evaluate2 = functools.cache(evaluate2)
 
-def y_equals(string:str, coor) -> tuple:
+
+def y_equals(string: str, coor) -> tuple:
     """
     given a function string, return a tuple of line coordinate pairs
     """
@@ -74,8 +77,7 @@ def y_equals(string:str, coor) -> tuple:
     return tuple(output)
 
 
-def xyre(s:str, coor) -> tuple:
-
+def xyre(s: str, coor) -> tuple:
     if list(s).count("=") != 1:
         return None
 
@@ -110,32 +112,32 @@ def xyre(s:str, coor) -> tuple:
         # compute
         points = []
         for mx, x in enumerate(
-            range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH - gap_px, gap_px)
+                range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH - gap_px, gap_px)
         ):
             for my, y in enumerate(range(ori_y % gap_py, DISPLAY_HEIGHT - gap_py, gap_py)):
                 temp = []
-                if sgn0(matrix[mx][my]) != sgn0(matrix[mx+1][my]):
+                if sgn0(matrix[mx][my]) != sgn0(matrix[mx + 1][my]):
                     temp.append((
                         x + gap_px * abs(matrix[mx][my]) /
-                        (abs(matrix[mx][my]) + abs(matrix[mx+1][my])),
+                        (abs(matrix[mx][my]) + abs(matrix[mx + 1][my])),
                         y,
                     ))
-                if sgn0(matrix[mx][my]) != sgn0(matrix[mx][my+1]):
+                if sgn0(matrix[mx][my]) != sgn0(matrix[mx][my + 1]):
                     temp.append((
                         x,
                         y + gap_py * abs(matrix[mx][my]) /
-                        (abs(matrix[mx][my]) + abs(matrix[mx][my+1])),
+                        (abs(matrix[mx][my]) + abs(matrix[mx][my + 1])),
                     ))
-                if sgn0(matrix[mx+1][my]) != sgn0(matrix[mx+1][my+1]):
+                if sgn0(matrix[mx + 1][my]) != sgn0(matrix[mx + 1][my + 1]):
                     temp.append((
                         x + gap_px,
-                        y + gap_py * abs(matrix[mx+1][my]) /
-                        (abs(matrix[mx+1][my]) + abs(matrix[mx+1][my+1])),
+                        y + gap_py * abs(matrix[mx + 1][my]) /
+                        (abs(matrix[mx + 1][my]) + abs(matrix[mx + 1][my + 1])),
                     ))
-                if sgn0(matrix[mx][my+1]) != sgn0(matrix[mx+1][my+1]):
+                if sgn0(matrix[mx][my + 1]) != sgn0(matrix[mx + 1][my + 1]):
                     temp.append((
-                        x + gap_px * abs(matrix[mx][my+1]) /
-                        (abs(matrix[mx][my+1]) + abs(matrix[mx+1][my+1])),
+                        x + gap_px * abs(matrix[mx][my + 1]) /
+                        (abs(matrix[mx][my + 1]) + abs(matrix[mx + 1][my + 1])),
                         y + gap_py,
                     ))
                 if len(temp) == 2:
