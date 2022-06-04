@@ -89,28 +89,28 @@ class Message:
         self.font = pygame.font.Font(None, 21)
         self.label_font = pygame.font.Font(None, 19)
 
-    def label(self, x, y, textString, color=DARK_GREY):
-        textString = str(textString)
-        textBitmap = self.label_font.render(textString, True, color)
-        textRect = textBitmap.get_rect()
+    def label(self, x, y, text_string, color=DARK_GREY):
+        text_string = str(text_string)
+        text_bitmap = self.label_font.render(text_string, True, color)
+        text_rect = text_bitmap.get_rect()
         left_most = Tab.width if tab.visible else 0
         if x < left_most:
             x = left_most
-        elif x > display_width - textRect.width:
-            x = display_width - textRect.width
+        elif x > display_width - text_rect.width:
+            x = display_width - text_rect.width
         if y < 0:
             y = 0
-        elif y > display_height - textRect.height:
-            y = display_height - textRect.height
-        display.blit(textBitmap, [x + 1, y + 1])
+        elif y > display_height - text_rect.height:
+            y = display_height - text_rect.height
+        display.blit(text_bitmap, [x + 1, y + 1])
 
-    def put(self, screen, textString, color=BLACK):
-        textBitmap = self.font.render(textString, True, color)
-        screen.blit(textBitmap, [self.x, self.y])
+    def put(self, screen, text_string, color=BLACK):
+        text_bitmap = self.font.render(text_string, True, color)
+        screen.blit(text_bitmap, [self.x, self.y])
         self.y += self.line_height
 
-    def put_delayed(self, screen, textString, show_time=1):
-        Message.delay_msg.append([screen, textString, show_time * FPS])
+    def put_delayed(self, screen, text_string, show_time=1):
+        Message.delay_msg.append([screen, text_string, show_time * FPS])
 
     def show_delayed(self):
         if len(Message.delay_msg) >= Message.limit:
@@ -203,7 +203,7 @@ class Coordinate:
     def scalex(self, value):
         old_scalex = self._scalex
         mouse_x = pygame.mouse.get_pos()[0]
-        coor.chori((self.origin[0]-mouse_x)/old_scalex*(value-old_scalex), 0)
+        coor.chori((self.origin[0] - mouse_x) / old_scalex * (value - old_scalex), 0)
         self._scalex = value
 
     @property
@@ -214,7 +214,7 @@ class Coordinate:
     def scaley(self, value):
         old_scaley = self._scaley
         mouse_y = pygame.mouse.get_pos()[1]
-        coor.chori(0, (self.origin[1]-mouse_y)/old_scaley*(value-old_scaley))
+        coor.chori(0, (self.origin[1] - mouse_y) / old_scaley * (value - old_scaley))
         self._scaley = value
 
     def chori(self, move_x, move_y):
@@ -224,15 +224,15 @@ class Coordinate:
     def axis(self):
         if self.axis_show:
             pygame.draw.line(display,
-                            RED,
-                            (0, self.origin[1]),
-                            (display_width, self.origin[1]),
-                            Coordinate._stroke_width)
+                             RED,
+                             (0, self.origin[1]),
+                             (display_width, self.origin[1]),
+                             Coordinate._stroke_width)
             pygame.draw.line(display,
-                            RED,
-                            (self.origin[0], 0),
-                            (self.origin[0], display_height),
-                            Coordinate._stroke_width)
+                             RED,
+                             (self.origin[0], 0),
+                             (self.origin[0], display_height),
+                             Coordinate._stroke_width)
 
     def grid(self):
         if not self.grid_show:
@@ -254,10 +254,10 @@ class Coordinate:
         # draw grid
         for line_x in range((ori_x - left_lim) % gap_px + left_lim, display_width, gap_px):
             pygame.draw.line(display,
-                            GREY,
-                            (line_x, 0),
-                            (line_x, display_height),
-                            Coordinate._stroke_width)
+                             GREY,
+                             (line_x, 0),
+                             (line_x, display_height),
+                             Coordinate._stroke_width)
             val = (line_x - ori_x) / coor.scalex
             if val != 0:
                 val = sig_figure(val, 2)
@@ -266,10 +266,10 @@ class Coordinate:
                 message.label(line_x, label_y, 0)
         for line_y in range(ori_y % gap_py, display_height, gap_py):
             pygame.draw.line(display,
-                            GREY,
-                            (0, line_y),
-                            (display_width, line_y),
-                            Coordinate._stroke_width)
+                             GREY,
+                             (0, line_y),
+                             (display_width, line_y),
+                             Coordinate._stroke_width)
             val = (ori_y - line_y) / coor.scaley
             if val != 0:
                 val = sig_figure(val, 2)
@@ -329,7 +329,7 @@ class Var:
             index = Var.family.index(Var.active)
             Var.family.remove(Var.active)
             if index == len(Var.family):
-                Var.set_act(index-1)
+                Var.set_act(index - 1)
             else:
                 Var.set_act(index)
         else:
@@ -375,7 +375,7 @@ class Var:
             return
         var = Var.active
         if var.cursor != 0:
-            var.exp = var.exp[:var.cursor-1] + var.exp[var.cursor:]
+            var.exp = var.exp[:var.cursor - 1] + var.exp[var.cursor:]
             var.cursor -= 1
 
     def legal_check(self):
@@ -457,7 +457,7 @@ class Func:
             index = Func.family.index(Func.active)
             Func.family.remove(Func.active)
             if index == len(Func.family):
-                Func.set_act(index-1)
+                Func.set_act(index - 1)
             else:
                 Func.set_act(index)
         else:
@@ -503,7 +503,7 @@ class Func:
             return
         func = Func.active
         if func.cursor != 0:
-            func.exp = func.exp[:func.cursor-1] + func.exp[func.cursor:]
+            func.exp = func.exp[:func.cursor - 1] + func.exp[func.cursor:]
             func.cursor -= 1
 
     def true_exp(self):
@@ -557,7 +557,7 @@ class Func:
             return
         pairs = None
         if 'y' in exp.split('=')[0:2]:
-            exp = exp.split('=')[1] if  'y' == exp.split('=')[0] else exp.split('=')[0]
+            exp = exp.split('=')[1] if 'y' == exp.split('=')[0] else exp.split('=')[0]
             if 'y' not in exp:
                 pairs = src.yeval.y_equals(exp, coor)
         if not pairs:
@@ -569,7 +569,6 @@ class Func:
 
         # loop through coordinate pairs
         for pair in pairs:
-
             # draw line
             pygame.draw.line(display, BLACK, *pair, Func._stroke_width)
 
@@ -636,22 +635,22 @@ class Tab:
 
     def func_tab(self):
         pygame.draw.rect(display,
-                        LIGHT_BLUE,
-                        (0, 0, Tab.width, display_height))
+                         LIGHT_BLUE,
+                         (0, 0, Tab.width, display_height))
         for func in Func.family:
             func.show()
 
     def var_tab(self):
         pygame.draw.rect(display,
-                        LIGHT_GREEN,
-                        (0, 0, Tab.width, display_height))
+                         LIGHT_GREEN,
+                         (0, 0, Tab.width, display_height))
         for var in Var.family:
             var.show()
 
     def view_tab(self):
         pygame.draw.rect(display,
-                        LIGHT_YELLOW,
-                        (0, 0, Tab.width, display_height))
+                         LIGHT_YELLOW,
+                         (0, 0, Tab.width, display_height))
 
     def resize_win(self, w, h):
         global display_width, display_height
@@ -755,8 +754,8 @@ def main():
                             ]
                         else:
                             coor.origin = [
-                                display_width/2,
-                                display_height/2,
+                                display_width / 2,
+                                display_height / 2,
                             ]
                     elif event.key == K_9:
                         ave = (coor.scalex + coor.scaley) / 2
@@ -764,9 +763,9 @@ def main():
                     elif event.key == K_8:
                         if tab.visible:
                             coor.origin = [display_width / 2 + Tab.width / 2,
-                                        display_height / 2]
+                                           display_height / 2]
                         else:
-                            coor.origin = [display_width/2, display_height/2]
+                            coor.origin = [display_width / 2, display_height / 2]
                     elif event.key == K_BACKSPACE:
                         if tab.visible == FUNC_TAB:
                             Func.remove()
@@ -964,7 +963,7 @@ def show_shortcuts():
 
         display.fill(WHITE)
         message.reset()
-        line_num = (display_height-10) / message.line_height - 1
+        line_num = (display_height - 10) / message.line_height - 1
         logger.debug("line_num -> {}".format(line_num))
         end = int(start + line_num)
         logger.debug("end -> {}".format(end))
