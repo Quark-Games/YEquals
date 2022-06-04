@@ -13,7 +13,7 @@ import functools
 
 import src
 
-# change directory to assests
+# change directory to assets
 INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 ASSETS = os.path.join(INIT_DIR, 'assets')
 
