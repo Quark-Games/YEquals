@@ -2,6 +2,7 @@ Welcome to the YEquals grapher!
 ===
 [![Build and Release](https://github.com/Quark-Games/YEquals/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/Quark-Games/YEquals/actions/workflows/release.yml)
 [![CodeQL](https://github.com/Quark-Games/YEquals/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/Quark-Games/YEquals/actions/workflows/codeql-analysis.yml)
+[![Dependency Review](https://github.com/Quark-Games/YEquals/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/Quark-Games/YEquals/actions/workflows/dependency-review.yml)
 [![Pylint](https://github.com/Quark-Games/YEquals/actions/workflows/pylint.yml/badge.svg?branch=master)](https://github.com/Quark-Games/YEquals/actions/workflows/pylint.yml)
 ***
 
