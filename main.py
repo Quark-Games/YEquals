@@ -984,7 +984,7 @@ def error(e_name):
 
     display.fill(WHITE)
     message.reset()
-    message.put(display, "Encontered Error")
+    message.put(display, "Encountered Error")
     message.indent()
     message.put(display, "Error name: " + e_name)
     message.put(display, "Log location: " + os.path.abspath(os.path.curdir))
