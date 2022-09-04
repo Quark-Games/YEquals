@@ -5,6 +5,9 @@ concurrency: build-and-release-${{ github.ref }}
 on:
   push:
     branches: [master, experimental, development]
+    path:
+      - '**/*.py'
+      - 'assets/**'
   
 jobs:
   build:
