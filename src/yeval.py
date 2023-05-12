@@ -9,6 +9,7 @@ import math
 import sys
 from .common import DISPLAY_WIDTH, DISPLAY_HEIGHT, SCALE_DX, SCALE_DY
 from .seval import seval, sgn0
+import typing
 
 
 def sig_figure(x, fig):
@@ -77,7 +78,7 @@ def y_equals(string: str, coor) -> tuple:
     return tuple(output)
 
 
-def xyre(s: str, coor) -> tuple:
+def xyre(s: str, coor) -> typing.Optional[tuple]:
 
     if list(s).count("=") != 1:
         return None
@@ -161,6 +162,8 @@ def xyre(s: str, coor) -> tuple:
                             y + gap_py,
                         )
                     )
+
+                # if there are 2 points to draw
                 if len(temp) == 2:
                     points.append(
                         (
@@ -168,7 +171,8 @@ def xyre(s: str, coor) -> tuple:
                             (int(temp[1][0]), int(temp[1][1])),
                         )
                     )
+                # Todo: add support for 4 points
 
-        return points
+        return tuple(points)
     except Exception:
         pass
