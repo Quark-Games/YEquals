@@ -628,6 +628,7 @@ DISPLAY_HEIGHT = 720
 SCALE_DX = 80
 SCALE_DY = 80
 
+
 def sgn0(num: float) -> float:
     """Returns -1 if num is less than 0 else 1."""
 
@@ -667,8 +668,10 @@ def seval(string: str, **kwargs) -> float:
 
     return eval(string, kwargs)
 
+
 def sig_figure(x: float, fig: int) -> float:
     return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
+
 
 @functools.cache
 def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
@@ -677,7 +680,9 @@ def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
     return seval(s, x=x, y=y)
 
 
-def y_equals(string: str, coordinates) -> tuple[tuple[tuple[int, int], tuple[int, int]], ...]:
+def y_equals(
+    string: str, coordinates
+) -> tuple[tuple[tuple[int, int], tuple[int, int]], ...]:
     """
     given a function string, return a tuple of line coordinate pairs
     """
@@ -832,6 +837,7 @@ def xyre(
         return tuple(line_segments)
     except Exception:
         return None
+
 
 # change directory to assets
 INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -1018,7 +1024,9 @@ class Coordinate:
     def scalex(self, value):
         old_scalex = self._scalex
         mouse_x = pygame.mouse.get_pos()[0]
-        coordinates.chori((self.origin[0] - mouse_x) / old_scalex * (value - old_scalex), 0)
+        coordinates.chori(
+            (self.origin[0] - mouse_x) / old_scalex * (value - old_scalex), 0
+        )
         self._scalex = value
 
     @property
@@ -1029,7 +1037,9 @@ class Coordinate:
     def scaley(self, value):
         old_scaley = self._scaley
         mouse_y = pygame.mouse.get_pos()[1]
-        coordinates.chori(0, (self.origin[1] - mouse_y) / old_scaley * (value - old_scaley))
+        coordinates.chori(
+            0, (self.origin[1] - mouse_y) / old_scaley * (value - old_scaley)
+        )
         self._scaley = value
 
     def chori(self, move_x, move_y):
