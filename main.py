@@ -62,11 +62,6 @@ VAR_TAB = 2
 VIEW_TAB = 3
 RELA_TAB = 4
 
-VAR_EXP_MATCH = 0
-VAR_EXP_NAME = 1
-VAR_EXP_VALUE = 2
-VAR_EXP_LEGAL = 3
-
 FPS = 30
 SCALE_DX = 80
 SCALE_DY = 80
@@ -287,6 +282,11 @@ class Coordinate:
 
 
 class Var:
+
+    VAR_EXP_MATCH = 0
+    VAR_EXP_NAME = 1
+    VAR_EXP_VALUE = 2
+    VAR_EXP_LEGAL = 3
     limit = 8
     family = []
     vars = {}
@@ -302,9 +302,9 @@ class Var:
             self.cursor = len(expression)
             self.visible = True
             Var.family.append(self)
-            Var.set_act(len(Var.family) - 1)
+            Var.set_active(len(Var.family) - 1)
         else:
-            message.put_delayed(display, "Maximum graph exceeded")
+            message.put_delayed(display, "Maximum variable limit exceeded")
 
     @property
     def exp(self):
@@ -314,13 +314,13 @@ class Var:
     def exp(self, value):
         self._exp = value
         self.legal_check()
-        if self.legality != VAR_EXP_LEGAL and self._vname in Var.vars:
+        if self.legality != Var.VAR_EXP_LEGAL and self._vname in Var.vars:
             del Var.vars[self._vname]
-        elif self.legality == VAR_EXP_LEGAL:
+        elif self.legality == Var.VAR_EXP_LEGAL:
             Var.vars[self._vname] = self._value
 
     @staticmethod
-    def set_act(index):
+    def set_active(index):
         if index == "u":
             if Var._act_index > 0:
                 Var._act_index -= 1
@@ -341,15 +341,16 @@ class Var:
             index = Var.family.index(Var.active)
             Var.family.remove(Var.active)
             if index == len(Var.family):
-                Var.set_act(index - 1)
+                Var.set_active(index - 1)
             else:
-                Var.set_act(index)
+                Var.set_active(index)
         else:
             message.put_delayed(display, "No variable to remove")
 
     @staticmethod
-    def move_cursor(move):
+    def move_cursor(move:int):
         var = Var.active
+        assert var is not None
         if move == -1:
             if var.cursor > 0:
                 var.cursor -= 1
@@ -397,16 +398,16 @@ class Var:
         # determine legality of a variable expression
         exp_match = re.match(VAR_EXP, self.exp)
         if not exp_match:
-            self.legality = VAR_EXP_MATCH
+            self.legality = Var.VAR_EXP_MATCH
         else:
             self._vname = exp_match.group("vname")
             self._value = exp_match.group("value")
             if not var_name(self._vname):
-                self.legality = VAR_EXP_NAME
+                self.legality = Var.VAR_EXP_NAME
             elif not is_int(self._value):
-                self.legality = VAR_EXP_VALUE
+                self.legality = Var.VAR_EXP_VALUE
             else:
-                self.legality = VAR_EXP_LEGAL
+                self.legality = Var.VAR_EXP_LEGAL
         return self.legality
 
     def show(self):
@@ -419,16 +420,16 @@ class Var:
             message.put(display, "var: " + self.exp)
 
         # display variable status
-        if self.legality == VAR_EXP_MATCH:
-            msg = "the variable expression is illegal"
-        elif self.legality == VAR_EXP_NAME:
-            msg = "the name of the variable is illegal"
-        elif self.legality == VAR_EXP_VALUE:
-            msg = "the value of the variable is illegal"
-        elif self.legality == VAR_EXP_LEGAL:
-            msg = "the variable is legal"
+        if self.legality == Var.VAR_EXP_MATCH:
+            msg = "The variable expression is illegal"
+        elif self.legality == Var.VAR_EXP_NAME:
+            msg = "The name of the variable is illegal"
+        elif self.legality == Var.VAR_EXP_VALUE:
+            msg = "The value of the variable is illegal"
+        elif self.legality == Var.VAR_EXP_LEGAL:
+            msg = "The variable is legal"
         else:
-            msg = "unknown message"
+            msg = "Unknown message"
         message.indent()
         message.put(display, msg)
         message.unindent()
@@ -879,9 +880,9 @@ def main():
                     elif event.key == K_RIGHT:
                         Var.move_cursor(1)
                     elif event.key == K_UP:
-                        Var.set_act("u")
+                        Var.set_active("u")
                     elif event.key == K_DOWN:
-                        Var.set_act("d")
+                        Var.set_active("d")
                     elif event.key == K_RETURN:
                         if not Var.active:
                             message.put_delayed(display, "No expression available")
