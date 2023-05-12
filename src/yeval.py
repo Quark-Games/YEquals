@@ -78,7 +78,12 @@ def y_equals(string: str, coor) -> tuple:
     return tuple(output)
 
 
-def xyre(s: str, coor) -> typing.Optional[tuple]:
+def xyre(
+    s: str, coor
+) -> typing.Optional[tuple[tuple[tuple[int, int], tuple[int, int]], ...]]:
+    """
+    Given a string, return a tuple of line coordinate pairs
+    """
 
     if list(s).count("=") != 1:
         return None
@@ -111,8 +116,8 @@ def xyre(s: str, coor) -> typing.Optional[tuple]:
                     evaluate2(x, y, r[0], ori_x, ori_y, coor.scalex, coor.scaley)
                     - evaluate2(x, y, r[1], ori_x, ori_y, coor.scalex, coor.scaley)
                 )
-        # compute
-        points = []
+        # compute line segments
+        line_segments: list[tuple[tuple[int, int], tuple[int, int]]] = []
         for mx, x in enumerate(
             range(
                 (ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH - gap_px, gap_px
@@ -121,9 +126,9 @@ def xyre(s: str, coor) -> typing.Optional[tuple]:
             for my, y in enumerate(
                 range(ori_y % gap_py, DISPLAY_HEIGHT - gap_py, gap_py)
             ):
-                temp = []
+                line_segment = []
                 if sgn0(matrix[mx][my]) != sgn0(matrix[mx + 1][my]):
-                    temp.append(
+                    line_segment.append(
                         (
                             x
                             + gap_px
@@ -133,7 +138,7 @@ def xyre(s: str, coor) -> typing.Optional[tuple]:
                         )
                     )
                 if sgn0(matrix[mx][my]) != sgn0(matrix[mx][my + 1]):
-                    temp.append(
+                    line_segment.append(
                         (
                             x,
                             y
@@ -143,7 +148,7 @@ def xyre(s: str, coor) -> typing.Optional[tuple]:
                         )
                     )
                 if sgn0(matrix[mx + 1][my]) != sgn0(matrix[mx + 1][my + 1]):
-                    temp.append(
+                    line_segment.append(
                         (
                             x + gap_px,
                             y
@@ -153,7 +158,7 @@ def xyre(s: str, coor) -> typing.Optional[tuple]:
                         )
                     )
                 if sgn0(matrix[mx][my + 1]) != sgn0(matrix[mx + 1][my + 1]):
-                    temp.append(
+                    line_segment.append(
                         (
                             x
                             + gap_px
@@ -164,15 +169,15 @@ def xyre(s: str, coor) -> typing.Optional[tuple]:
                     )
 
                 # if there are 2 points to draw
-                if len(temp) == 2:
-                    points.append(
+                if len(line_segment) == 2:
+                    line_segments.append(
                         (
-                            (int(temp[0][0]), int(temp[0][1])),
-                            (int(temp[1][0]), int(temp[1][1])),
+                            (int(line_segment[0][0]), int(line_segment[0][1])),
+                            (int(line_segment[1][0]), int(line_segment[1][1])),
                         )
                     )
-                # Todo: add support for 4 points
+                # TODO: add support for 4 points
 
-        return tuple(points)
+        return tuple(line_segments)
     except Exception:
         pass
