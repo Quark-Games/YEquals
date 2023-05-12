@@ -1,8 +1,8 @@
-#pylint: disable=wildcard-import
-#pylint: disable=unused-wildcard-import
-#pylint: disable=redefined-builtin
-#pylint: disable=unused-argument
-#pylint: disable=eval-used
+# pylint: disable=wildcard-import
+# pylint: disable=unused-wildcard-import
+# pylint: disable=redefined-builtin
+# pylint: disable=unused-argument
+# pylint: disable=eval-used
 """
 /src/seval.py
 
@@ -11,12 +11,14 @@ contains seval()
 
 import math
 
+
 def sgn0(num: float) -> float:
     """Returns -1 if num is less than 0 else 1."""
 
     if num < 0:
         return -1
     return 1
+
 
 def sgn(num: float) -> float:
     """
@@ -35,7 +37,8 @@ def sgn(num: float) -> float:
         return -1
     return 0
 
-def seval(string:str, **kwargs) -> float:
+
+def seval(string: str, **kwargs) -> float:
     """
     given a function string, return the value
     """
