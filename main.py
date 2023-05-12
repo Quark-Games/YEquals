@@ -10,6 +10,7 @@ import sys
 from time import time
 import traceback
 import functools
+import typing
 
 import src
 
@@ -289,16 +290,16 @@ class Var:
     limit = 8
     family = []
     vars = {}
-    active = None
+    active: typing.Optional[typing.Self] = None
     _act_index = 0
 
-    def __init__(self, exp):
+    def __init__(self, expression: str = ''):
         if len(Var.family) < Var.limit:
             self._exp = ""
             self._vname = None
             self._value = None
-            self.exp = exp
-            self.cursor = len(exp)
+            self.exp = expression
+            self.cursor = len(expression)
             self.visible = True
             Var.family.append(self)
             Var.set_act(len(Var.family) - 1)
@@ -318,6 +319,7 @@ class Var:
         elif self.legality == VAR_EXP_LEGAL:
             Var.vars[self._vname] = self._value
 
+    @staticmethod
     def set_act(index):
         if index == "u":
             if Var._act_index > 0:
@@ -333,6 +335,7 @@ class Var:
         else:
             Var.active = None
 
+    @staticmethod
     def remove():
         if Var.family:
             index = Var.family.index(Var.active)
@@ -344,6 +347,7 @@ class Var:
         else:
             message.put_delayed(display, "No variable to remove")
 
+    @staticmethod
     def move_cursor(move):
         var = Var.active
         if move == -1:
@@ -359,6 +363,7 @@ class Var:
             if var.cursor < len(var.exp):
                 var.cursor = len(var.exp)
 
+    @staticmethod
     def insert(char):
         if not Var.active:
             message.put_delayed(display, "No variable has been created")
@@ -378,6 +383,7 @@ class Var:
             close = PARENTHESIS[char]
             var.exp = var.exp[0 : var.cursor] + close + var.exp[var.cursor :]
 
+    @staticmethod
     def delete():
         if not Var.active:
             message.put_delayed(display, "No variable has been created")
@@ -421,6 +427,8 @@ class Var:
             msg = "the value of the variable is illegal"
         elif self.legality == VAR_EXP_LEGAL:
             msg = "the variable is legal"
+        else:
+            msg = "unknown message"
         message.indent()
         message.put(display, msg)
         message.unindent()
