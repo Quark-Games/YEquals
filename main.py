@@ -176,6 +176,7 @@ class File:
             message.put_delayed(display, "Error occured while saving data")
             logger.error("File %s not properly saved", self.fname)
 
+    @staticmethod
     def screenshot():
         pygame.image.save(display, SS_PATH)
 
@@ -293,7 +294,7 @@ class Var:
     active: typing.Optional[typing.Self] = None
     _act_index = 0
 
-    def __init__(self, expression: str = ''):
+    def __init__(self, expression: str = ""):
         if len(Var.family) < Var.limit:
             self._exp = ""
             self._vname = None
@@ -348,7 +349,7 @@ class Var:
             message.put_delayed(display, "No variable to remove")
 
     @staticmethod
-    def move_cursor(move:int):
+    def move_cursor(move: int):
         var = Var.active
         assert var is not None
         if move == -1:
@@ -441,22 +442,23 @@ class Var:
 class Func:
     limit = 8
     family = []
-    active = None
+    active: typing.Optional[typing.Self] = None
     _act_index = 0
     _accuracy = 1
     _stroke_width = 2
 
-    def __init__(self, exp):
+    def __init__(self, exp:str = ''):
         if len(Func.family) < Func.limit:
             self.exp = exp
             self.cursor = len(exp)
             self.visible = True
             Func.family.append(self)
-            Func.set_act(len(Func.family) - 1)
+            Func.set_active(len(Func.family) - 1)
         else:
             message.put_delayed(display, "Maximum graph exceeded")
 
-    def set_act(index):
+    @staticmethod
+    def set_active(index):
         if index == "u":
             if Func._act_index > 0:
                 Func._act_index -= 1
@@ -471,32 +473,36 @@ class Func:
         else:
             Func.active = None
 
+    @staticmethod
     def remove():
         if Func.family:
             index = Func.family.index(Func.active)
             Func.family.remove(Func.active)
             if index == len(Func.family):
-                Func.set_act(index - 1)
+                Func.set_active(index - 1)
             else:
-                Func.set_act(index)
+                Func.set_active(index)
         else:
             message.put_delayed(display, "No graph expression to remove")
 
+    @staticmethod
     def move_cursor(move):
-        func = Func.active
+        function = Func.active
+        assert function is not None
         if move == -1:
-            if func.cursor > 0:
-                func.cursor -= 1
+            if function.cursor > 0:
+                function.cursor -= 1
         elif move == 1:
-            if func.cursor < len(func.exp):
-                func.cursor += 1
+            if function.cursor < len(function.exp):
+                function.cursor += 1
         if move == -2:
-            if func.cursor > 0:
-                func.cursor = 0
+            if function.cursor > 0:
+                function.cursor = 0
         elif move == 2:
-            if func.cursor < len(func.exp):
-                func.cursor = len(func.exp)
+            if function.cursor < len(function.exp):
+                function.cursor = len(function.exp)
 
+    @staticmethod
     def insert(char):
         if not Func.active:
             message.put_delayed(display, "No expression has been created")
@@ -516,6 +522,7 @@ class Func:
             close = PARENTHESIS[char]
             func.exp = func.exp[0 : func.cursor] + close + func.exp[func.cursor :]
 
+    @staticmethod
     def delete():
         if not Func.active:
             message.put_delayed(display, "No expression has been created")
@@ -529,6 +536,7 @@ class Func:
         exp_match = re.match(FULL_EXP, self.exp)
         if not exp_match:
             exp = self.exp
+            domain = ""
         else:
             exp = exp_match.group("exp")
             domain = exp_match.group("domain")
@@ -814,9 +822,11 @@ def main():
                         coor.grid_show = not coor.grid_show
                     elif event.key == K_c:
                         if tab.visible == FUNC_TAB:
+                            assert func is not None
                             pyperclip.copy(func.exp)
                     elif event.key == K_v:
                         if tab.visible == FUNC_TAB:
+                            assert func is not None
                             func.exp = pyperclip.paste()
                             Func.move_cursor(2)
                     elif event.key == K_LEFT:
@@ -845,13 +855,14 @@ def main():
                     elif event.key == K_RIGHT:
                         Func.move_cursor(1)
                     elif event.key == K_UP:
-                        Func.set_act("u")
+                        Func.set_active("u")
                     elif event.key == K_DOWN:
-                        Func.set_act("d")
+                        Func.set_active("d")
                     elif event.key == K_RETURN:
                         if not Func.active:
                             message.put_delayed(display, "No expression available")
                         else:
+                            assert func is not None
                             func.visible = not func.visible
                     elif event.key == K_SPACE:
                         Func.insert(" ")
@@ -887,6 +898,7 @@ def main():
                         if not Var.active:
                             message.put_delayed(display, "No expression available")
                         else:
+                            assert var is not None
                             var.visible = not var.visible
                     elif event.key == K_SPACE:
                         Var.insert(" ")
@@ -907,6 +919,7 @@ def main():
                 tab.resize_win(event.w, event.h)
 
         # mouse control
+        mods = pygame.key.get_mods()
         mouse_press = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
         if (mods & KMOD_META) or (mods & KMOD_CTRL):
@@ -955,6 +968,8 @@ def show_shortcuts():
     show = True
     start = 0
 
+    line_num = 0
+
     while show:
 
         for event in pygame.event.get():
@@ -995,6 +1010,7 @@ def show_shortcuts():
 
 def error(e_name):
     # This isn't used anywhere?
+    raise Exception("Error function called")
     logger.error(e.__class__.__name__, exc_info=True)
 
     display.fill(WHITE)

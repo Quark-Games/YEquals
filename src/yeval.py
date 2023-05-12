@@ -26,7 +26,7 @@ if sys.version_info[1] >= 9:
     evaluate2 = functools.cache(evaluate2)
 
 
-def y_equals(string: str, coor) -> tuple:
+def y_equals(string: str, coor) -> tuple[tuple[tuple[int, int], tuple[int, int]], ...]:
     """
     given a function string, return a tuple of line coordinate pairs
     """
@@ -79,13 +79,13 @@ def y_equals(string: str, coor) -> tuple:
 
 
 def xyre(
-    s: str, coor
+    string: str, coor
 ) -> typing.Optional[tuple[tuple[tuple[int, int], tuple[int, int]], ...]]:
     """
     Given a string, return a tuple of line coordinate pairs
     """
 
-    if list(s).count("=") != 1:
+    if list(string).count("=") != 1:
         return None
 
     # draw graph of the relation
@@ -103,7 +103,7 @@ def xyre(
     # compute matrix
     try:
         # sanity check
-        r = tuple(s.split("="))
+        r = tuple(string.split("="))
         evaluate2(0, 0, r[0], ori_x, ori_y, coor.scalex, coor.scaley)
         evaluate2(0, 0, r[1], ori_x, ori_y, coor.scalex, coor.scaley)
 
