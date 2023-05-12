@@ -2,3 +2,4 @@ pyperclip
 pygame
 pyinstaller
 pylint
+numpy
