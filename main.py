@@ -622,7 +622,216 @@ import traceback
 import functools
 import typing
 
-import src
+
+DISPLAY_WIDTH = 1200
+DISPLAY_HEIGHT = 720
+SCALE_DX = 80
+SCALE_DY = 80
+
+def sgn0(num: float) -> float:
+    """Returns -1 if num is less than 0 else 1."""
+
+    if num < 0:
+        return -1
+    return 1
+
+
+def sgn(num: float) -> float:
+    """
+    Return the sign of x.
+
+    >>> sgn(0)
+    0
+    >>> sgn(1)
+    1
+    >>> sgn(-1)
+    -1
+    """
+    if num > 0:
+        return 1
+    if num < 0:
+        return -1
+    return 0
+
+
+def seval(string: str, **kwargs) -> float:
+    """
+    given a function string, return the value
+    """
+
+    # extend kwargs with math functions
+    kwargs.update(math.__dict__)
+
+    # extend kwargs with sgn and sgn0 functions
+    kwargs.update(sgn=sgn, sgn0=sgn0)
+
+    return eval(string, kwargs)
+
+def sig_figure(x: float, fig: int) -> float:
+    return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
+
+@functools.cache
+def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
+    x = (x - ori_x) / scalex
+    y = (ori_y - y) / scaley
+    return seval(s, x=x, y=y)
+
+
+def y_equals(string: str, coordinates) -> tuple[tuple[tuple[int, int], tuple[int, int]], ...]:
+    """
+    given a function string, return a tuple of line coordinate pairs
+    """
+
+    # create old tuple of coordinate pairs
+    old_coordinates = None
+
+    # create output list
+    output = []
+
+    # loop through x values from x_min to x_max with DISPLAY_WIDTH increments
+    for x_disp in range(DISPLAY_WIDTH):
+        try:
+
+            # calculate x value
+            x = (x_disp - coordinates.origin[0]) / coordinates.scalex
+
+            # calculate y value
+            y = seval(string, x=x)
+
+            # convert y value to display coordinates
+            y_raw = coordinates.origin[1] - y * coordinates.scaley
+
+            # if this is the first coordinate pair
+            if old_coordinates is None:
+
+                # set old coordinate pair
+                old_coordinates = (x_disp, y_raw)
+
+            # if this is not the first coordinate pair
+            else:
+
+                # create new coordinate pair
+                new_coord = (x_disp, y_raw)
+
+                # add old and new coordinate pair to output list
+                output.append((old_coordinates, new_coord))
+
+                # set old coordinate pair
+                old_coordinates = new_coord
+
+        # if there is an error
+        except Exception:
+
+            # set old coordinate pair to None
+            old_coordinates = None
+
+    # return output tuple
+    return tuple(output)
+
+
+def xyre(
+    string: str, coor
+) -> typing.Optional[tuple[tuple[tuple[int, int], tuple[int, int]], ...]]:
+    """
+    Given a string, return a tuple of line coordinate pairs
+    """
+
+    if list(string).count("=") != 1:
+        return None
+
+    # draw graph of the relation
+    # initiate value
+    ori_x, ori_y = map(int, coor.origin)
+    gap_x, gap_y = SCALE_DX / coor.scalex, SCALE_DY / coor.scaley
+    # print(coor.origin)
+    gap_x = sig_figure(gap_x, 2)
+    gap_y = sig_figure(gap_y, 2)
+    gap_px = int(gap_x * coor.scalex) // 5
+    gap_py = int(gap_y * coor.scaley) // 5
+    # left_lim = Tab.width if tab.visible else 0
+    left_lim = 0
+
+    # compute matrix
+    try:
+        # sanity check
+        r = tuple(string.split("="))
+        evaluate2(0, 0, r[0], ori_x, ori_y, coor.scalex, coor.scaley)
+        evaluate2(0, 0, r[1], ori_x, ori_y, coor.scalex, coor.scaley)
+
+        # compute matrix
+        matrix = []
+        for x in range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH, gap_px):
+            matrix.append([])
+            for y in range(ori_y % gap_py, DISPLAY_HEIGHT, gap_py):
+                matrix[-1].append(
+                    evaluate2(x, y, r[0], ori_x, ori_y, coor.scalex, coor.scaley)
+                    - evaluate2(x, y, r[1], ori_x, ori_y, coor.scalex, coor.scaley)
+                )
+        # compute line segments
+        line_segments: list[tuple[tuple[int, int], tuple[int, int]]] = []
+        for mx, x in enumerate(
+            range(
+                (ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH - gap_px, gap_px
+            )
+        ):
+            for my, y in enumerate(
+                range(ori_y % gap_py, DISPLAY_HEIGHT - gap_py, gap_py)
+            ):
+                line_segment = []
+                if sgn0(matrix[mx][my]) != sgn0(matrix[mx + 1][my]):
+                    line_segment.append(
+                        (
+                            x
+                            + gap_px
+                            * abs(matrix[mx][my])
+                            / (abs(matrix[mx][my]) + abs(matrix[mx + 1][my])),
+                            y,
+                        )
+                    )
+                if sgn0(matrix[mx][my]) != sgn0(matrix[mx][my + 1]):
+                    line_segment.append(
+                        (
+                            x,
+                            y
+                            + gap_py
+                            * abs(matrix[mx][my])
+                            / (abs(matrix[mx][my]) + abs(matrix[mx][my + 1])),
+                        )
+                    )
+                if sgn0(matrix[mx + 1][my]) != sgn0(matrix[mx + 1][my + 1]):
+                    line_segment.append(
+                        (
+                            x + gap_px,
+                            y
+                            + gap_py
+                            * abs(matrix[mx + 1][my])
+                            / (abs(matrix[mx + 1][my]) + abs(matrix[mx + 1][my + 1])),
+                        )
+                    )
+                if sgn0(matrix[mx][my + 1]) != sgn0(matrix[mx + 1][my + 1]):
+                    line_segment.append(
+                        (
+                            x
+                            + gap_px
+                            * abs(matrix[mx][my + 1])
+                            / (abs(matrix[mx][my + 1]) + abs(matrix[mx + 1][my + 1])),
+                            y + gap_py,
+                        )
+                    )
+
+                # if there are 2 points to draw
+                if len(line_segment) == 2:
+                    line_segments.append(
+                        (
+                            (int(line_segment[0][0]), int(line_segment[0][1])),
+                            (int(line_segment[1][0]), int(line_segment[1][1])),
+                        )
+                    )
+                # TODO: add support for 4 points
+
+        return tuple(line_segments)
+    except Exception:
+        return None
 
 # change directory to assets
 INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -688,14 +897,14 @@ CLOSE_PAREN = (")", "]", "}")
 
 class Message:
     limit = 5
-    delay_msg = []
+    delay_messages = []
 
     def __init__(self):
         self.reset()
         self.font = pygame.font.Font(None, 21)
         self.label_font = pygame.font.Font(None, 19)
 
-    def label(self, x, y, textString, color=DARK_GREY):
+    def label(self, x, y, textString, color=DARK_GREY) -> None:
         textString = str(textString)
         textBitmap = self.label_font.render(textString, True, color)
         textRect = textBitmap.get_rect()
@@ -716,19 +925,19 @@ class Message:
         self.y += self.line_height
 
     def put_delayed(self, screen, textString, show_time=1):
-        Message.delay_msg.append([screen, textString, show_time * FPS])
+        Message.delay_messages.append([screen, textString, show_time * FPS])
 
     def show_delayed(self):
-        if len(Message.delay_msg) >= Message.limit:
-            del Message.delay_msg[:-5]
-        if len(Message.delay_msg) != 0:
+        if len(Message.delay_messages) >= Message.limit:
+            del Message.delay_messages[:-5]
+        if len(Message.delay_messages) != 0:
             self.put(display, "Information")
             self.indent()
-            for msg in Message.delay_msg:
+            for msg in Message.delay_messages:
                 self.put(msg[0], msg[1])
                 msg[2] -= 1
                 if msg[2] <= 0:
-                    Message.delay_msg.remove(msg)
+                    Message.delay_messages.remove(msg)
             self.unindent()
 
     def reset(self):
@@ -754,11 +963,11 @@ class File:
             with open(self.fname, "rb") as f:
                 Func.family = pickle.load(f)
                 Var.family = pickle.load(f)
-                coor.scalex = pickle.load(f)
-                coor.scaley = pickle.load(f)
-                coor.origin = pickle.load(f)
-                coor.axis_show = pickle.load(f)
-                coor.grid_show = pickle.load(f)
+                coordinates.scalex = pickle.load(f)
+                coordinates.scaley = pickle.load(f)
+                coordinates.origin = pickle.load(f)
+                coordinates.axis_show = pickle.load(f)
+                coordinates.grid_show = pickle.load(f)
             if Func.family:
                 Func.active = Func.family[Func._act_index]
             if Var.family:
@@ -776,11 +985,11 @@ class File:
                 Tab.visible = True
                 pickle.dump(Func.family, f)
                 pickle.dump(Var.family, f)
-                pickle.dump(coor.scalex, f)
-                pickle.dump(coor.scaley, f)
-                pickle.dump(coor.origin, f)
-                pickle.dump(coor.axis_show, f)
-                pickle.dump(coor.grid_show, f)
+                pickle.dump(coordinates.scalex, f)
+                pickle.dump(coordinates.scaley, f)
+                pickle.dump(coordinates.origin, f)
+                pickle.dump(coordinates.axis_show, f)
+                pickle.dump(coordinates.grid_show, f)
             logger.info("File %s properly saved", self.fname)
         except Exception as e:
             message.put_delayed(display, "Error occured while saving data")
@@ -809,7 +1018,7 @@ class Coordinate:
     def scalex(self, value):
         old_scalex = self._scalex
         mouse_x = pygame.mouse.get_pos()[0]
-        coor.chori((self.origin[0] - mouse_x) / old_scalex * (value - old_scalex), 0)
+        coordinates.chori((self.origin[0] - mouse_x) / old_scalex * (value - old_scalex), 0)
         self._scalex = value
 
     @property
@@ -820,7 +1029,7 @@ class Coordinate:
     def scaley(self, value):
         old_scaley = self._scaley
         mouse_y = pygame.mouse.get_pos()[1]
-        coor.chori(0, (self.origin[1] - mouse_y) / old_scaley * (value - old_scaley))
+        coordinates.chori(0, (self.origin[1] - mouse_y) / old_scaley * (value - old_scaley))
         self._scaley = value
 
     def chori(self, move_x, move_y):
@@ -852,13 +1061,13 @@ class Coordinate:
             return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
 
         # initiate value
-        ori_x, ori_y = map(int, coor.origin)
-        gap_x, gap_y = SCALE_DX / coor.scalex, SCALE_DY / coor.scaley
+        ori_x, ori_y = map(int, coordinates.origin)
+        gap_x, gap_y = SCALE_DX / coordinates.scalex, SCALE_DY / coordinates.scaley
         gap_x = sig_figure(gap_x, 2)
         gap_y = sig_figure(gap_y, 2)
-        gap_px = int(gap_x * coor.scalex)
-        gap_py = int(gap_y * coor.scaley)
-        label_x, label_y = map(int, coor.origin)
+        gap_px = int(gap_x * coordinates.scalex)
+        gap_py = int(gap_y * coordinates.scaley)
+        label_x, label_y = map(int, coordinates.origin)
         left_lim = Tab.width if tab.visible else 0
 
         # draw grid
@@ -872,7 +1081,7 @@ class Coordinate:
                 (line_x, display_height),
                 Coordinate._stroke_width,
             )
-            val = (line_x - ori_x) / coor.scalex
+            val = (line_x - ori_x) / coordinates.scalex
             if val != 0:
                 val = sig_figure(val, 2)
                 message.label(line_x, label_y, val)
@@ -886,7 +1095,7 @@ class Coordinate:
                 (display_width, line_y),
                 Coordinate._stroke_width,
             )
-            val = (ori_y - line_y) / coor.scaley
+            val = (ori_y - line_y) / coordinates.scaley
             if val != 0:
                 val = sig_figure(val, 2)
                 message.label(label_x, line_y, val)
@@ -1196,9 +1405,9 @@ class Func:
         if "y" in exp.split("=")[0:2]:
             exp = exp.split("=")[1] if "y" == exp.split("=")[0] else exp.split("=")[0]
             if "y" not in exp:
-                pairs = src.yeval.y_equals(exp, coor)
+                pairs = y_equals(exp, coordinates)
         if not pairs:
-            pairs = src.yeval.xyre(exp, coor)
+            pairs = xyre(exp, coordinates)
 
         # check for errors
         if pairs is None:
@@ -1254,9 +1463,9 @@ class Tab:
         temp = self._visible
         self._visible = value
         if not tab._visible:
-            coor.chori(-Tab.width / 2, 0)
+            coordinates.chori(-Tab.width / 2, 0)
         elif not temp:
-            coor.chori(Tab.width / 2, 0)
+            coordinates.chori(Tab.width / 2, 0)
 
     def show_tab(self):
         if tab.visible:
@@ -1295,12 +1504,12 @@ class Tab:
             message.put_delayed(display, "minimal window height is 600")
         display_width, display_height = w, h
         pygame.display.set_mode((w, h), RESIZABLE)
-        coor.chori((w - old_w) / 2, (h - old_h) / 2)
+        coordinates.chori((w - old_w) / 2, (h - old_h) / 2)
 
 
 data = File(os.path.join(ASSETS, "data.p"))
 message = Message()
-coor = Coordinate()
+coordinates = Coordinate()
 tab = Tab()
 
 
@@ -1358,11 +1567,11 @@ def main():
                     mods & KMOD_CTRL and mods & KMOD_SHIFT
                 ):
                     if event.key == K_MINUS:
-                        coor.scalex /= SCALE_RATIO
-                        coor.scaley /= SCALE_RATIO
+                        coordinates.scalex /= SCALE_RATIO
+                        coordinates.scaley /= SCALE_RATIO
                     elif event.key == K_EQUALS:
-                        coor.scalex *= SCALE_RATIO
-                        coor.scaley *= SCALE_RATIO
+                        coordinates.scalex *= SCALE_RATIO
+                        coordinates.scaley *= SCALE_RATIO
                     elif event.key == K_c:
                         File.screenshot()
 
@@ -1373,34 +1582,34 @@ def main():
                     elif event.key == K_m:
                         pygame.display.iconify()
                     elif event.key == K_MINUS:
-                        coor.scalex /= 2
-                        coor.scaley /= 2
+                        coordinates.scalex /= 2
+                        coordinates.scaley /= 2
                     elif event.key == K_EQUALS:
-                        coor.scalex *= 2
-                        coor.scaley *= 2
+                        coordinates.scalex *= 2
+                        coordinates.scaley *= 2
                     elif event.key == K_0:
-                        coor.scalex, coor.scaley = SCALE_DX, SCALE_DY
+                        coordinates.scalex, coordinates.scaley = SCALE_DX, SCALE_DY
                         if tab.visible:
-                            coor.origin = [
+                            coordinates.origin = [
                                 display_width / 2 + Tab.width / 2,
                                 display_height / 2,
                             ]
                         else:
-                            coor.origin = [
+                            coordinates.origin = [
                                 display_width / 2,
                                 display_height / 2,
                             ]
                     elif event.key == K_9:
-                        ave = (coor.scalex + coor.scaley) / 2
-                        coor.scalex, coor.scaley = ave, ave
+                        ave = (coordinates.scalex + coordinates.scaley) / 2
+                        coordinates.scalex, coordinates.scaley = ave, ave
                     elif event.key == K_8:
                         if tab.visible:
-                            coor.origin = [
+                            coordinates.origin = [
                                 display_width / 2 + Tab.width / 2,
                                 display_height / 2,
                             ]
                         else:
-                            coor.origin = [display_width / 2, display_height / 2]
+                            coordinates.origin = [display_width / 2, display_height / 2]
                     elif event.key == K_BACKSPACE:
                         if tab.visible == FUNC_TAB:
                             Func.remove()
@@ -1427,9 +1636,9 @@ def main():
                         else:
                             tab.visible = VIEW_TAB
                     elif event.key == K_a:
-                        coor.axis_show = not coor.axis_show
+                        coordinates.axis_show = not coordinates.axis_show
                     elif event.key == K_g:
-                        coor.grid_show = not coor.grid_show
+                        coordinates.grid_show = not coordinates.grid_show
                     elif event.key == K_c:
                         if tab.visible == FUNC_TAB:
                             assert func is not None
@@ -1520,11 +1729,11 @@ def main():
             elif event.type == MOUSEBUTTONDOWN:
                 # if mods & KMOD_SHIFT:
                 if event.button == 4:
-                    coor.scalex //= SCALE_RATIO
-                    coor.scaley //= SCALE_RATIO
+                    coordinates.scalex //= SCALE_RATIO
+                    coordinates.scaley //= SCALE_RATIO
                 elif event.button == 5:
-                    coor.scalex *= SCALE_RATIO
-                    coor.scaley *= SCALE_RATIO
+                    coordinates.scalex *= SCALE_RATIO
+                    coordinates.scaley *= SCALE_RATIO
             elif event.type == VIDEORESIZE:
                 tab.resize_win(event.w, event.h)
 
@@ -1533,14 +1742,14 @@ def main():
         mouse_press = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
         if (mods & KMOD_META) or (mods & KMOD_CTRL):
-            coor.chori(*pygame.mouse.get_rel())
+            coordinates.chori(*pygame.mouse.get_rel())
         elif mouse_press[0]:
-            coor.chori(*pygame.mouse.get_rel())
+            coordinates.chori(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
             minimal = min(display_width, display_height)
-            coor.scalex *= 1 + mouse_move[0] / -minimal
-            coor.scaley *= 1 + mouse_move[1] / minimal
+            coordinates.scalex *= 1 + mouse_move[0] / -minimal
+            coordinates.scaley *= 1 + mouse_move[1] / minimal
         else:
             if corner.collidepoint(mouse_pos):
                 show_shortcuts()
@@ -1551,8 +1760,8 @@ def main():
         # display
         display.fill(WHITE)
 
-        coor.grid()
-        coor.axis()
+        coordinates.grid()
+        coordinates.axis()
 
         for func in Func.family:
             func.draw()
