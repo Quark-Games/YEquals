@@ -15,7 +15,7 @@ import src
 
 # change directory to assets
 INIT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
-ASSETS = os.path.join(INIT_DIR, 'assets')
+ASSETS = os.path.join(INIT_DIR, "assets")
 
 # logger initiation
 DEBUG_FILE = os.path.join(INIT_DIR, "debug", f"debug_{time()}.log")
@@ -71,13 +71,13 @@ SCALE_DX = 80
 SCALE_DY = 80
 SCALE_RATIO = 1.2
 
-SS_PATH = os.path.join(os.path.expanduser('~'), "Desktop", "screenshot.jpg")
+SS_PATH = os.path.join(os.path.expanduser("~"), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]\s*$"
 COE_PAIR = r"[\d\)\w_]x|x\(|\)x"
 VAR_EXP = r"(?P<vname>[\w|_]+)\s?=\s?(?P<value>\S+)\s*$"
 FILE_PATH = r"(\w+)/?(\w+)"
-PARENTHESIS = {'(': ')', '[': ']', '{': '}'}
-CLOSE_PAREN = (')', ']', '}')
+PARENTHESIS = {"(": ")", "[": "]", "{": "}"}
+CLOSE_PAREN = (")", "]", "}")
 
 
 class Message:
@@ -140,13 +140,12 @@ class Message:
 
 
 class File:
-
     def __init__(self, fname):
         self.fname = fname
 
     def get(self):
         try:
-            with open(self.fname, 'rb') as f:
+            with open(self.fname, "rb") as f:
                 Func.family = pickle.load(f)
                 Var.family = pickle.load(f)
                 coor.scalex = pickle.load(f)
@@ -167,7 +166,7 @@ class File:
 
     def put(self):
         try:
-            with open(self.fname, 'wb') as f:
+            with open(self.fname, "wb") as f:
                 Tab.visible = True
                 pickle.dump(Func.family, f)
                 pickle.dump(Var.family, f)
@@ -203,7 +202,7 @@ class Coordinate:
     def scalex(self, value):
         old_scalex = self._scalex
         mouse_x = pygame.mouse.get_pos()[0]
-        coor.chori((self.origin[0]-mouse_x)/old_scalex*(value-old_scalex), 0)
+        coor.chori((self.origin[0] - mouse_x) / old_scalex * (value - old_scalex), 0)
         self._scalex = value
 
     @property
@@ -214,7 +213,7 @@ class Coordinate:
     def scaley(self, value):
         old_scaley = self._scaley
         mouse_y = pygame.mouse.get_pos()[1]
-        coor.chori(0, (self.origin[1]-mouse_y)/old_scaley*(value-old_scaley))
+        coor.chori(0, (self.origin[1] - mouse_y) / old_scaley * (value - old_scaley))
         self._scaley = value
 
     def chori(self, move_x, move_y):
@@ -223,16 +222,20 @@ class Coordinate:
 
     def axis(self):
         if self.axis_show:
-            pygame.draw.line(display,
-                            RED,
-                            (0, self.origin[1]),
-                            (display_width, self.origin[1]),
-                            Coordinate._stroke_width)
-            pygame.draw.line(display,
-                            RED,
-                            (self.origin[0], 0),
-                            (self.origin[0], display_height),
-                            Coordinate._stroke_width)
+            pygame.draw.line(
+                display,
+                RED,
+                (0, self.origin[1]),
+                (display_width, self.origin[1]),
+                Coordinate._stroke_width,
+            )
+            pygame.draw.line(
+                display,
+                RED,
+                (self.origin[0], 0),
+                (self.origin[0], display_height),
+                Coordinate._stroke_width,
+            )
 
     def grid(self):
         if not self.grid_show:
@@ -252,12 +255,16 @@ class Coordinate:
         left_lim = Tab.width if tab.visible else 0
 
         # draw grid
-        for line_x in range((ori_x - left_lim) % gap_px + left_lim, display_width, gap_px):
-            pygame.draw.line(display,
-                            GREY,
-                            (line_x, 0),
-                            (line_x, display_height),
-                            Coordinate._stroke_width)
+        for line_x in range(
+            (ori_x - left_lim) % gap_px + left_lim, display_width, gap_px
+        ):
+            pygame.draw.line(
+                display,
+                GREY,
+                (line_x, 0),
+                (line_x, display_height),
+                Coordinate._stroke_width,
+            )
             val = (line_x - ori_x) / coor.scalex
             if val != 0:
                 val = sig_figure(val, 2)
@@ -265,11 +272,13 @@ class Coordinate:
             else:
                 message.label(line_x, label_y, 0)
         for line_y in range(ori_y % gap_py, display_height, gap_py):
-            pygame.draw.line(display,
-                            GREY,
-                            (0, line_y),
-                            (display_width, line_y),
-                            Coordinate._stroke_width)
+            pygame.draw.line(
+                display,
+                GREY,
+                (0, line_y),
+                (display_width, line_y),
+                Coordinate._stroke_width,
+            )
             val = (ori_y - line_y) / coor.scaley
             if val != 0:
                 val = sig_figure(val, 2)
@@ -310,11 +319,11 @@ class Var:
             Var.vars[self._vname] = self._value
 
     def set_act(index):
-        if index == 'u':
+        if index == "u":
             if Var._act_index > 0:
                 Var._act_index -= 1
                 Var.active = Var.family[Var._act_index]
-        elif index == 'd':
+        elif index == "d":
             if Var._act_index < len(Var.family) - 1:
                 Var._act_index += 1
                 Var.active = Var.family[Var._act_index]
@@ -329,7 +338,7 @@ class Var:
             index = Var.family.index(Var.active)
             Var.family.remove(Var.active)
             if index == len(Var.family):
-                Var.set_act(index-1)
+                Var.set_act(index - 1)
             else:
                 Var.set_act(index)
         else:
@@ -363,11 +372,11 @@ class Var:
                 if char == var.exp[var.cursor]:
                     var.cursor += 1
                     return
-        var.exp = var.exp[0:var.cursor] + char + var.exp[var.cursor:]
+        var.exp = var.exp[0 : var.cursor] + char + var.exp[var.cursor :]
         var.cursor += len(char)
         if char in PARENTHESIS:
             close = PARENTHESIS[char]
-            var.exp = var.exp[0:var.cursor] + close + var.exp[var.cursor:]
+            var.exp = var.exp[0 : var.cursor] + close + var.exp[var.cursor :]
 
     def delete():
         if not Var.active:
@@ -375,7 +384,7 @@ class Var:
             return
         var = Var.active
         if var.cursor != 0:
-            var.exp = var.exp[:var.cursor-1] + var.exp[var.cursor:]
+            var.exp = var.exp[: var.cursor - 1] + var.exp[var.cursor :]
             var.cursor -= 1
 
     def legal_check(self):
@@ -396,9 +405,10 @@ class Var:
 
     def show(self):
         if Var.active == self:
-            message.put(display,
-                        "var: " + self.exp[:self.cursor] +
-                        '|' + self.exp[self.cursor:])
+            message.put(
+                display,
+                "var: " + self.exp[: self.cursor] + "|" + self.exp[self.cursor :],
+            )
         else:
             message.put(display, "var: " + self.exp)
 
@@ -438,11 +448,11 @@ class Func:
             message.put_delayed(display, "Maximum graph exceeded")
 
     def set_act(index):
-        if index == 'u':
+        if index == "u":
             if Func._act_index > 0:
                 Func._act_index -= 1
                 Func.active = Func.family[Func._act_index]
-        elif index == 'd':
+        elif index == "d":
             if Func._act_index < len(Func.family) - 1:
                 Func._act_index += 1
                 Func.active = Func.family[Func._act_index]
@@ -457,7 +467,7 @@ class Func:
             index = Func.family.index(Func.active)
             Func.family.remove(Func.active)
             if index == len(Func.family):
-                Func.set_act(index-1)
+                Func.set_act(index - 1)
             else:
                 Func.set_act(index)
         else:
@@ -491,11 +501,11 @@ class Func:
                 if char == func.exp[func.cursor]:
                     func.cursor += 1
                     return
-        func.exp = func.exp[0:func.cursor] + char + func.exp[func.cursor:]
+        func.exp = func.exp[0 : func.cursor] + char + func.exp[func.cursor :]
         func.cursor += len(char)
         if char in PARENTHESIS:
             close = PARENTHESIS[char]
-            func.exp = func.exp[0:func.cursor] + close + func.exp[func.cursor:]
+            func.exp = func.exp[0 : func.cursor] + close + func.exp[func.cursor :]
 
     def delete():
         if not Func.active:
@@ -503,7 +513,7 @@ class Func:
             return
         func = Func.active
         if func.cursor != 0:
-            func.exp = func.exp[:func.cursor-1] + func.exp[func.cursor:]
+            func.exp = func.exp[: func.cursor - 1] + func.exp[func.cursor :]
             func.cursor -= 1
 
     def true_exp(self):
@@ -520,7 +530,7 @@ class Func:
             exp = exp.replace(switch[0], switch[1])
         while re.findall(COE_PAIR, exp):
             for pair in set(re.findall(COE_PAIR, exp)):
-                exp = exp.replace(pair, pair[0] + '*' + pair[1])
+                exp = exp.replace(pair, pair[0] + "*" + pair[1])
 
         if not exp_match:
             return exp
@@ -531,34 +541,34 @@ class Func:
         true_exp = self.true_exp()
         if self.visible:
             if type(true_exp) == str:
-                if '±' not in true_exp:
+                if "±" not in true_exp:
                     self.graph(true_exp)
                 else:
                     message.indent()
-                    self.graph(true_exp.replace('±', '+'))
-                    self.graph(true_exp.replace('±', '-'))
+                    self.graph(true_exp.replace("±", "+"))
+                    self.graph(true_exp.replace("±", "-"))
                     message.unindent()
             else:
                 exp, domain = true_exp
-                if '±' not in exp:
+                if "±" not in exp:
                     self.graph(exp, domain)
                 else:
                     message.indent()
-                    self.graph(exp.replace('±', '+'), domain)
-                    self.graph(exp.replace('±', '-'), domain)
+                    self.graph(exp.replace("±", "+"), domain)
+                    self.graph(exp.replace("±", "-"), domain)
                     message.unindent()
 
     def graph(self, exp, domain="True"):
         self.drawability = 1
 
         # check if the expression is function or relation
-        if len(exp.split('=')) != 2:
+        if len(exp.split("=")) != 2:
             self.drawability = 0
             return
         pairs = None
-        if 'y' in exp.split('=')[0:2]:
-            exp = exp.split('=')[1] if  'y' == exp.split('=')[0] else exp.split('=')[0]
-            if 'y' not in exp:
+        if "y" in exp.split("=")[0:2]:
+            exp = exp.split("=")[1] if "y" == exp.split("=")[0] else exp.split("=")[0]
+            if "y" not in exp:
                 pairs = src.yeval.y_equals(exp, coor)
         if not pairs:
             pairs = src.yeval.xyre(exp, coor)
@@ -583,8 +593,7 @@ class Func:
         else:
             if Func.active == self:
                 message.put(
-                    display,
-                    f"{self.exp[:self.cursor]}|{self.exp[self.cursor:]}"
+                    display, f"{self.exp[:self.cursor]}|{self.exp[self.cursor:]}"
                 )
             else:
                 message.put(display, self.exp)
@@ -635,23 +644,17 @@ class Tab:
             display.blit(tab_banner_img, (0, 0))
 
     def func_tab(self):
-        pygame.draw.rect(display,
-                        LIGHT_BLUE,
-                        (0, 0, Tab.width, display_height))
+        pygame.draw.rect(display, LIGHT_BLUE, (0, 0, Tab.width, display_height))
         for func in Func.family:
             func.show()
 
     def var_tab(self):
-        pygame.draw.rect(display,
-                        LIGHT_GREEN,
-                        (0, 0, Tab.width, display_height))
+        pygame.draw.rect(display, LIGHT_GREEN, (0, 0, Tab.width, display_height))
         for var in Var.family:
             var.show()
 
     def view_tab(self):
-        pygame.draw.rect(display,
-                        LIGHT_YELLOW,
-                        (0, 0, Tab.width, display_height))
+        pygame.draw.rect(display, LIGHT_YELLOW, (0, 0, Tab.width, display_height))
 
     def resize_win(self, w, h):
         global display_width, display_height
@@ -686,7 +689,7 @@ def is_int(literal):
 def var_name(literal):
     if literal in Var.vars:
         return True
-    elif literal in ['x', 'y']:
+    elif literal in ["x", "y"]:
         return False
     elif literal in vars():
         return False
@@ -702,8 +705,8 @@ def main():
     global display_width, display_height, shortcuts
 
     data.get()
-    with open(os.path.join(ASSETS, "shortcuts.txt"), 'r') as f:
-        shortcuts = [line.replace('\n', '') for line in f.readlines()]
+    with open(os.path.join(ASSETS, "shortcuts.txt"), "r") as f:
+        shortcuts = [line.replace("\n", "") for line in f.readlines()]
 
     while True:
 
@@ -724,7 +727,9 @@ def main():
             if event.type == KEYDOWN:
 
                 # cmd / ctrl + shift
-                if (mods & KMOD_META and mods & KMOD_SHIFT) or (mods & KMOD_CTRL and mods & KMOD_SHIFT):
+                if (mods & KMOD_META and mods & KMOD_SHIFT) or (
+                    mods & KMOD_CTRL and mods & KMOD_SHIFT
+                ):
                     if event.key == K_MINUS:
                         coor.scalex /= SCALE_RATIO
                         coor.scaley /= SCALE_RATIO
@@ -755,18 +760,20 @@ def main():
                             ]
                         else:
                             coor.origin = [
-                                display_width/2,
-                                display_height/2,
+                                display_width / 2,
+                                display_height / 2,
                             ]
                     elif event.key == K_9:
                         ave = (coor.scalex + coor.scaley) / 2
                         coor.scalex, coor.scaley = ave, ave
                     elif event.key == K_8:
                         if tab.visible:
-                            coor.origin = [display_width / 2 + Tab.width / 2,
-                                        display_height / 2]
+                            coor.origin = [
+                                display_width / 2 + Tab.width / 2,
+                                display_height / 2,
+                            ]
                         else:
-                            coor.origin = [display_width/2, display_height/2]
+                            coor.origin = [display_width / 2, display_height / 2]
                     elif event.key == K_BACKSPACE:
                         if tab.visible == FUNC_TAB:
                             Func.remove()
@@ -774,9 +781,9 @@ def main():
                             Var.remove()
                     elif event.key == K_RETURN:
                         if tab.visible == FUNC_TAB:
-                            Func('')
+                            Func("")
                         elif tab.visible == VAR_TAB:
-                            Var('')
+                            Var("")
                     elif event.key == K_1:
                         if tab.visible == FUNC_TAB:
                             tab.visible = None
@@ -829,17 +836,16 @@ def main():
                     elif event.key == K_RIGHT:
                         Func.move_cursor(1)
                     elif event.key == K_UP:
-                        Func.set_act('u')
+                        Func.set_act("u")
                     elif event.key == K_DOWN:
-                        Func.set_act('d')
+                        Func.set_act("d")
                     elif event.key == K_RETURN:
                         if not Func.active:
-                            message.put_delayed(display,
-                                                "No expression available")
+                            message.put_delayed(display, "No expression available")
                         else:
                             func.visible = not func.visible
                     elif event.key == K_SPACE:
-                        Func.insert(' ')
+                        Func.insert(" ")
                     # basic input
                     else:
                         k_name = pygame.key.name(event.key)
@@ -865,17 +871,16 @@ def main():
                     elif event.key == K_RIGHT:
                         Var.move_cursor(1)
                     elif event.key == K_UP:
-                        Var.set_act('u')
+                        Var.set_act("u")
                     elif event.key == K_DOWN:
-                        Var.set_act('d')
+                        Var.set_act("d")
                     elif event.key == K_RETURN:
                         if not Var.active:
-                            message.put_delayed(display,
-                                                "No expression available")
+                            message.put_delayed(display, "No expression available")
                         else:
                             var.visible = not var.visible
                     elif event.key == K_SPACE:
-                        Var.insert(' ')
+                        Var.insert(" ")
                     # basic input
                     else:
                         k_name = pygame.key.name(event.key)
@@ -964,7 +969,7 @@ def show_shortcuts():
 
         display.fill(WHITE)
         message.reset()
-        line_num = (display_height-10) / message.line_height - 1
+        line_num = (display_height - 10) / message.line_height - 1
         logger.debug("line_num -> {}".format(line_num))
         end = int(start + line_num)
         logger.debug("end -> {}".format(end))
@@ -980,6 +985,7 @@ def show_shortcuts():
 
 
 def error(e_name):
+    # This isn't used anywhere?
     logger.error(e.__class__.__name__, exc_info=True)
 
     display.fill(WHITE)
