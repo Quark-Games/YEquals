@@ -1043,10 +1043,10 @@ class Variable:
 
     def __init__(self, expression: str = ""):
         if len(Variable.family) < Variable.limit:
-            self._exp = ""
-            self._vname: typing.Optional[str] = None
+            self._expression = ""
+            self._variable_name: typing.Optional[str] = None
             self._value: typing.Optional[str] = None
-            self.exp = expression
+            self.expression = expression
             self.cursor = len(expression)
             self.visible = True
             self.legality: Variable.VariableLegality = Variable.VariableLegality.VARIBLE_EXPRESSION_ILLEGAL
@@ -1056,17 +1056,17 @@ class Variable:
             message.put_delayed(display, "Maximum variable limit exceeded")
 
     @property
-    def exp(self) -> str:
-        return self._exp
+    def expression(self) -> str:
+        return self._expression
 
-    @exp.setter
-    def exp(self, value: str) -> None:
-        self._exp = value
+    @expression.setter
+    def expression(self, value: str) -> None:
+        self._expression = value
         self.legal_check()
-        if self.legality != Variable.VariableLegality.VARIABLE_LEGAL and self._vname in Variable.vars:
-            del Variable.vars[self._vname]
+        if self.legality != Variable.VariableLegality.VARIABLE_LEGAL and self._variable_name in Variable.vars:
+            del Variable.vars[self._variable_name]
         elif self.legality == Variable.VariableLegality.VARIABLE_LEGAL:
-            Variable.vars[self._vname] = self._value
+            Variable.vars[self._variable_name] = self._value
 
     @staticmethod
     def set_active(index: int | str) -> None:
@@ -1106,14 +1106,14 @@ class Variable:
             if var.cursor > 0:
                 var.cursor -= 1
         elif move == 1:
-            if var.cursor < len(var.exp):
+            if var.cursor < len(var.expression):
                 var.cursor += 1
         if move == -2:
             if var.cursor > 0:
                 var.cursor = 0
         elif move == 2:
-            if var.cursor < len(var.exp):
-                var.cursor = len(var.exp)
+            if var.cursor < len(var.expression):
+                var.cursor = len(var.expression)
 
     @staticmethod
     def insert(char: str) -> None:
@@ -1121,19 +1121,19 @@ class Variable:
             message.put_delayed(display, "No variable has been created")
             return
         var = Variable.active
-        if len(var.exp) > 25:
+        if len(var.expression) > 25:
             message.put_delayed(display, "Variable expression too long")
             return
         if char in CLOSE_PARENTHESIS:
-            if var.cursor <= len(var.exp) - 1:
-                if char == var.exp[var.cursor]:
+            if var.cursor <= len(var.expression) - 1:
+                if char == var.expression[var.cursor]:
                     var.cursor += 1
                     return
-        var.exp = var.exp[0 : var.cursor] + char + var.exp[var.cursor :]
+        var.expression = var.expression[0 : var.cursor] + char + var.expression[var.cursor :]
         var.cursor += len(char)
         if char in PARENTHESIS:
             close = PARENTHESIS[char]
-            var.exp = var.exp[0 : var.cursor] + close + var.exp[var.cursor :]
+            var.expression = var.expression[0 : var.cursor] + close + var.expression[var.cursor :]
 
     @staticmethod
     def delete() -> None:
@@ -1142,18 +1142,18 @@ class Variable:
             return
         var = Variable.active
         if var.cursor != 0:
-            var.exp = var.exp[: var.cursor - 1] + var.exp[var.cursor :]
+            var.expression = var.expression[: var.cursor - 1] + var.expression[var.cursor :]
             var.cursor -= 1
 
     def legal_check(self) -> VariableLegality:
         # determine legality of a variable expression
-        exp_match = re.match(VAR_EXP, self.exp)
+        exp_match = re.match(VAR_EXP, self.expression)
         if not exp_match:
             self.legality = Variable.VariableLegality.VARIBLE_EXPRESSION_ILLEGAL
         else:
-            self._vname = exp_match.group("vname")
+            self._variable_name = exp_match.group("vname")
             self._value = exp_match.group("value")
-            if not valid_variable_name(self._vname):
+            if not valid_variable_name(self._variable_name):
                 self.legality = Variable.VariableLegality.VARIABLE_NAME_ILLEGAL
             elif not is_int(self._value):
                 self.legality = Variable.VariableLegality.VARIABLE_VALUE_ILLEGAL
@@ -1163,9 +1163,9 @@ class Variable:
 
     def show(self) -> None:
         if Variable.active == self:
-            message.put(display, "var: " + self.exp[: self.cursor] + "|" + self.exp[self.cursor :])
+            message.put(display, "var: " + self.expression[: self.cursor] + "|" + self.expression[self.cursor :])
         else:
-            message.put(display, "var: " + self.exp)
+            message.put(display, "var: " + self.expression)
         match self.legality:
             case Variable.VariableLegality.VARIBLE_EXPRESSION_ILLEGAL:
                 msg = "The variable expression is illegal"
@@ -1180,7 +1180,7 @@ class Variable:
         message.unindent()
 
     def __del__(self) -> None:
-        del Variable.vars[self._vname]
+        del Variable.vars[self._variable_name]
 
 
 class Func:
@@ -1378,7 +1378,6 @@ class Func:
 
 data = File(os.path.join(ASSETS, "data.p"))
 message = Message()
-# coordinates = Coordinates()
 tab = Tab()
 
 
