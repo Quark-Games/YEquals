@@ -733,27 +733,26 @@ class Message:
 
     def label(self, x: int, y: int, text_string: str, color: tuple[int, int, int] = DARK_GREY) -> None:
         text_string = str(text_string)
-        textBitmap = self.label_font.render(text_string, True, color)
-        textRect = textBitmap.get_rect()
+        text_bitmap = self.label_font.render(text_string, True, color)
+        text_rect = text_bitmap.get_rect()
         left_most = Tab.width if tab.visible else 0
         if x < left_most:
             x = left_most
-        elif x > display_width - textRect.width:
-            x = display_width - textRect.width
+        elif x > display_width - text_rect.width:
+            x = display_width - text_rect.width
         if y < 0:
             y = 0
-        elif y > display_height - textRect.height:
-            y = display_height - textRect.height
-        display.blit(textBitmap, [x + 1, y + 1])
+        elif y > display_height - text_rect.height:
+            y = display_height - text_rect.height
+        display.blit(text_bitmap, [x + 1, y + 1])
 
     def put(self, screen: pygame.Surface, text_string: str, color: tuple[int, int, int] = BLACK) -> None:
-        textBitmap = self.font.render(text_string, True, color)
-        screen.blit(textBitmap, [self.x, self.y])
+        text_bitmap = self.font.render(text_string, True, color)
+        screen.blit(text_bitmap, [self.x, self.y])
         self.y += self.line_height
 
     def put_delayed(self, screen: pygame.Surface, text_string: str, show_time: int = 1) -> None:
         Message.delayed_messages.append(Message.DelayedMessage(screen, text_string, show_time * FPS))
-        # Message.delay_messages.append([screen, text_string, show_time * FPS])
 
     def show_delayed(self) -> None:
         if len(Message.delayed_messages) >= Message.limit:
@@ -842,14 +841,14 @@ class Tab:
     width: typing.ClassVar[int] = 300
 
     def __init__(self) -> None:
-        self._visible: int|bool|None = True
+        self._visible: int | bool | None = True
 
     @property
-    def visible(self) -> int|bool|None:
+    def visible(self) -> int | bool | None:
         return self._visible
 
     @visible.setter
-    def visible(self, value: int|bool|None) -> None:
+    def visible(self, value: int | bool | None) -> None:
         temp = self._visible
         self._visible = value
         if not tab._visible:
@@ -1030,7 +1029,6 @@ class Coordinates:
 
 
 class Variable:
-
     class VariableLegality(enum.Enum):
         VARIBLE_EXPRESSION_ILLEGAL = 0
         VARIABLE_NAME_ILLEGAL = 1
@@ -1323,7 +1321,7 @@ class Func:
                     self.graph(exp.replace("±", "-"), domain)
                     message.unindent()
 
-    def graph(self, expression: str, domain: str="True") -> None:
+    def graph(self, expression: str, domain: str = "True") -> None:
         self.drawability = 1
 
         # check if the expression is function or relation
@@ -1705,38 +1703,15 @@ def show_shortcuts() -> None:
     message.reset()
 
 
-def error(e_name: typing.Any) -> None:
-    # This isn't used anywhere?
-    raise Exception("Error function called")
-    # logger.error(e.__class__.__name__, exc_info=True)
-
-    # display.fill(WHITE)
-    # message.reset()
-    # message.put(display, "Encontered Error")
-    # message.indent()
-    # message.put(display, "Error name: " + e_name)
-    # message.put(display, "Log location: " + os.path.abspath(os.path.curdir))
-    # message.put(display, "Press any key to exit...")
-    # display.blit(logo_img, (display_width - 45, 10))
-    # pygame.display.flip()
-
-    # show = True
-    # while show:
-    #     for event in pygame.event.get():
-    #         if event.type == QUIT or event.type == KEYDOWN:
-    #             quit_all(False)
-    #     clock.tick(FPS)
-
-
-def sgn0(num: float) -> float:
+def sgn0(num: numpy.float128) -> numpy.float128:
     """Returns -1 if num is less than 0 else 1."""
 
     if num < 0:
-        return -1
-    return 1
+        return numpy.float128(-1)
+    return numpy.float128(1)
 
 
-def sgn(num: float) -> float:
+def sgn(num: numpy.float128) -> numpy.float128:
     """
     Return the sign of x.
 
@@ -1748,13 +1723,13 @@ def sgn(num: float) -> float:
     -1
     """
     if num > 0:
-        return 1
+        return numpy.float128(1)
     if num < 0:
-        return -1
-    return 0
+        return numpy.float128(-1)
+    return numpy.float128(0)
 
 
-def seval(string: str, **kwargs: typing.Any) -> float:
+def seval(string: str, **kwargs: typing.Any) -> numpy.float128:
     """
     given a function string, return the value
     """
@@ -1766,20 +1741,22 @@ def seval(string: str, **kwargs: typing.Any) -> float:
     # extend kwargs with sgn and sgn0 functions
     kwargs.update({"sgn": sgn, "sgn0": sgn0})
 
-    return float(eval(string, kwargs))
+    # extend with numpy functions
+    # kwargs.update(numpy.__dict__)
 
+    return numpy.float128(eval(string, kwargs))
 
-def sig_figure(x: fractions.Fraction | float, fig: int) -> float:
-    if isinstance(x, float):
+def sig_figure(x: fractions.Fraction | numpy.float128, fig: int) -> numpy.float128:
+    if isinstance(x, numpy.floating):
         return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
     try:
-        return round(float(x), fig - int(math.floor(math.log10(abs(x)))) - 1)
+        return round(numpy.float128(x), fig - int(math.floor(math.log10(abs(x)))) - 1)
     except OverflowError:
-        return sgn(x.denominator) * float("inf")
+        return sgn(numpy.float128(x.denominator)) * float("inf")
 
 
 # @functools.cache
-def evaluate2(x: float, y: float, s: str, origin_x: int, origin_y: int, scale_x: fractions.Fraction, scale_y: fractions.Fraction) -> float:
+def evaluate2(x: float, y: float, s: str, origin_x: int, origin_y: int, scale_x: fractions.Fraction, scale_y: fractions.Fraction) -> numpy.float128:
     x = (x - origin_x) / scale_x
     y = (origin_y - y) / scale_y
     return seval(s, x=x, y=y)
@@ -1807,7 +1784,7 @@ def y_equals(string: str, origin: DisplayPoint, scale_x: fractions.Fraction, sca
             y = seval(string, x=x)
 
             # convert y value to display coordinates
-            y_raw = origin.y - y * scale_y
+            y_raw = origin.y - y * scale_y.numerator / scale_y.denominator
 
             # if this is the first coordinate pair
             if old_coordinates is None:
@@ -1865,7 +1842,7 @@ def xyre(string: str, origin: DisplayPoint, scale_x: fractions.Fraction, scale_y
         evaluate2(0, 0, r[1], ori_x, ori_y, scale_x, scale_y)
 
         # compute matrix
-        matrix: list[list[float]] = []
+        matrix: list[list[numpy.float128]] = []
         for x in range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH, gap_px):
             matrix.append([])
             for y in range(ori_y % gap_py, DISPLAY_HEIGHT, gap_py):
