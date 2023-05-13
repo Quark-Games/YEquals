@@ -1,5 +1,6 @@
 import math
 import pygame
+import enum
 import logging
 import os
 import pickle
@@ -627,8 +628,6 @@ SWITCH = (
 
 DISPLAY_WIDTH = 1200
 DISPLAY_HEIGHT = 720
-SCALE_DX = 80
-SCALE_DY = 80
 
 
 # change directory to assets
@@ -791,7 +790,7 @@ class File:
         try:
             with open(self.fname, "rb") as file:
                 Func.family = pickle.load(file)
-                Var.family = pickle.load(file)
+                Variable.family = pickle.load(file)
                 # coordinates.scale_x = pickle.load(f)
                 Coordinates.set_scale_x(pickle.load(file))
                 # coordinates.scale_y = pickle.load(f)
@@ -804,10 +803,10 @@ class File:
                 Coordinates.set_grid_show(pickle.load(file))
             if Func.family:
                 Func.active = Func.family[Func._act_index]
-            if Var.family:
-                for var in Var.family:
+            if Variable.family:
+                for var in Variable.family:
                     var.exp = var.exp
-                Var.active = Var.family[Var._act_index]
+                Variable.active = Variable.family[Variable._act_index]
             logger.info("File %s is properly loaded", self.fname)
         except Exception as e:
             message.put_delayed(display, "Error occured while loading data")
@@ -818,7 +817,7 @@ class File:
             with open(self.fname, "wb") as file:
                 # Tab.visible = True # ????
                 pickle.dump(Func.family, file)
-                pickle.dump(Var.family, file)
+                pickle.dump(Variable.family, file)
                 # pickle.dump(coordinates.scale_x, f)
                 pickle.dump(Coordinates.get_scale_x(), file)
                 # pickle.dump(coordinates.scale_y, f)
@@ -843,14 +842,14 @@ class Tab:
     width: typing.ClassVar[int] = 300
 
     def __init__(self) -> None:
-        self._visible = True
+        self._visible: int|bool|None = True
 
     @property
-    def visible(self):
+    def visible(self) -> int|bool|None:
         return self._visible
 
     @visible.setter
-    def visible(self, value):
+    def visible(self, value: int|bool|None) -> None:
         temp = self._visible
         self._visible = value
         if not tab._visible:
@@ -879,13 +878,13 @@ class Tab:
 
     def var_tab(self) -> None:
         pygame.draw.rect(display, LIGHT_GREEN, (0, 0, Tab.width, display_height))
-        for var in Var.family:
+        for var in Variable.family:
             var.show()
 
     def view_tab(self) -> None:
         pygame.draw.rect(display, LIGHT_YELLOW, (0, 0, Tab.width, display_height))
 
-    def resize_win(self, width: int, height: int):
+    def resize_win(self, width: int, height: int) -> None:
         global display_width, display_height
         old_size = display.get_rect()
         old_w, old_h = old_size.right, old_size.bottom
@@ -905,7 +904,7 @@ class Coordinates:
     _stroke_width: typing.ClassVar[int] = 2
     _scale_x: typing.ClassVar[fractions.Fraction] = fractions.Fraction(SCALE_DX)
     _scale_y: typing.ClassVar[fractions.Fraction] = fractions.Fraction(SCALE_DY)
-    __origin: typing.ClassVar[DisplayPoint] = DisplayPoint(display_width // 2 + Tab.width // 2, display_height // 2)
+    _origin: typing.ClassVar[DisplayPoint] = DisplayPoint(display_width // 2 + Tab.width // 2, display_height // 2)
     _axis_show: typing.ClassVar[bool] = True
     _grid_show: typing.ClassVar[bool] = True
 
@@ -920,7 +919,7 @@ class Coordinates:
     def set_scale_x(scale_x: fractions.Fraction) -> None:
         old_scale_x = Coordinates._scale_x
         mouse_x = pygame.mouse.get_pos()[0]
-        Coordinates.move_origin((Coordinates.__origin.x - mouse_x) // int(old_scale_x / (scale_x - old_scale_x)), 0)
+        Coordinates.move_origin((Coordinates._origin.x - mouse_x) // int(old_scale_x / (scale_x - old_scale_x)), 0)
         Coordinates._scale_x = scale_x
 
     @staticmethod
@@ -931,7 +930,7 @@ class Coordinates:
     def set_scale_y(value: fractions.Fraction) -> None:
         old_scale_y = Coordinates._scale_y
         mouse_y = pygame.mouse.get_pos()[1]
-        Coordinates.move_origin(0, (Coordinates.__origin.y - mouse_y) // int(old_scale_y / (value - old_scale_y)))
+        Coordinates.move_origin(0, (Coordinates._origin.y - mouse_y) // int(old_scale_y / (value - old_scale_y)))
         Coordinates._scale_y = value
 
     @staticmethod
@@ -954,20 +953,20 @@ class Coordinates:
         return Coordinates._scale_x, Coordinates._scale_y
 
     @staticmethod
-    def get_origin():
-        return Coordinates.__origin
+    def get_origin() -> DisplayPoint:
+        return Coordinates._origin
 
     @staticmethod
     def set_origin(value: DisplayPoint) -> None:
         assert isinstance(value, DisplayPoint)
-        Coordinates.__origin = value
+        Coordinates._origin = value
 
     @staticmethod
-    def get_axis_show():
+    def get_axis_show() -> bool:
         return Coordinates._axis_show
 
     @staticmethod
-    def set_axis_show(value):
+    def set_axis_show(value: bool) -> None:
         Coordinates._axis_show = value
 
     @staticmethod
@@ -975,11 +974,11 @@ class Coordinates:
         Coordinates._axis_show = not Coordinates._axis_show
 
     @staticmethod
-    def get_grid_show():
+    def get_grid_show() -> bool:
         return Coordinates._grid_show
 
     @staticmethod
-    def set_grid_show(value):
+    def set_grid_show(value: bool) -> None:
         Coordinates._grid_show = value
 
     @staticmethod
@@ -988,19 +987,19 @@ class Coordinates:
 
     @staticmethod
     def reset_origin(tab_visibility: bool) -> None:
-        Coordinates.__origin.x = display_width // 2 + Tab.width // 2 if tab_visibility else display_width // 2
-        Coordinates.__origin.y = display_height // 2
+        Coordinates._origin.x = display_width // 2 + Tab.width // 2 if tab_visibility else display_width // 2
+        Coordinates._origin.y = display_height // 2
 
     @staticmethod
     def move_origin(x: int, y: int) -> None:
-        Coordinates.__origin.x += x
-        Coordinates.__origin.y += y
+        Coordinates._origin.x += x
+        Coordinates._origin.y += y
 
     @staticmethod
     def axis() -> None:
         if Coordinates._axis_show:
-            pygame.draw.line(display, RED, (0, Coordinates.__origin.y), (display_width, Coordinates.__origin.y), Coordinates._stroke_width)
-            pygame.draw.line(display, RED, (Coordinates.__origin.x, 0), (Coordinates.__origin.x, display_height), Coordinates._stroke_width)
+            pygame.draw.line(display, RED, (0, Coordinates._origin.y), (display_width, Coordinates._origin.y), Coordinates._stroke_width)
+            pygame.draw.line(display, RED, (Coordinates._origin.x, 0), (Coordinates._origin.x, display_height), Coordinates._stroke_width)
 
     @staticmethod
     def grid() -> None:
@@ -1012,94 +1011,98 @@ class Coordinates:
         gap_x, gap_y = SCALE_DX / Coordinates._scale_x, SCALE_DY / Coordinates._scale_y
         gap_px = int(gap_x * Coordinates._scale_x)
         gap_py = int(gap_y * Coordinates._scale_y)
-        label_x, label_y = Coordinates.__origin.x, Coordinates.__origin.y
+        label_x, label_y = Coordinates._origin.x, Coordinates._origin.y
         left_lim = Tab.width if tab.visible else 0
 
         # draw grid
-        for line_x in range((Coordinates.__origin.x - left_lim) % gap_px + left_lim, display_width, gap_px):
+        for line_x in range((Coordinates._origin.x - left_lim) % gap_px + left_lim, display_width, gap_px):
             pygame.draw.line(display, GREY, (line_x, 0), (line_x, display_height), Coordinates._stroke_width)
-            val: fractions.Fraction = (line_x - Coordinates.__origin.x) / Coordinates._scale_x
+            val: fractions.Fraction = (line_x - Coordinates._origin.x) / Coordinates._scale_x
             if val != 0:
                 message.label(line_x, label_y, str(sig_figure(val, 2)))
             else:
                 message.label(line_x, label_y, str(0))
-        for line_y in range(Coordinates.__origin.y % gap_py, display_height, gap_py):
+        for line_y in range(Coordinates._origin.y % gap_py, display_height, gap_py):
             pygame.draw.line(display, GREY, (0, line_y), (display_width, line_y), Coordinates._stroke_width)
-            val = (Coordinates.__origin.y - line_y) / Coordinates._scale_y
+            val = (Coordinates._origin.y - line_y) / Coordinates._scale_y
             if val != 0:
                 message.label(label_x, line_y, str(sig_figure(val, 2)))
 
 
-class Var:
+class Variable:
 
-    VAR_EXP_MATCH = 0
-    VAR_EXP_NAME = 1
-    VAR_EXP_VALUE = 2
-    VAR_EXP_LEGAL = 3
+    class VariableLegality(enum.Enum):
+        VARIBLE_EXPRESSION_ILLEGAL = 0
+        VARIABLE_NAME_ILLEGAL = 1
+        VARIABLE_VALUE_ILLEGAL = 2
+        VARIABLE_LEGAL = 3
+
     limit = 8
     family: typing.ClassVar[list[typing.Self]] = []
     vars: dict[typing.Optional[str], typing.Optional[str]] = {}
     active: typing.ClassVar[typing.Optional[typing.Self]] = None
-    _act_index = 0
+    _act_index: typing.ClassVar[int] = 0
 
     def __init__(self, expression: str = ""):
-        if len(Var.family) < Var.limit:
+        if len(Variable.family) < Variable.limit:
             self._exp = ""
             self._vname: typing.Optional[str] = None
             self._value: typing.Optional[str] = None
             self.exp = expression
             self.cursor = len(expression)
             self.visible = True
-            Var.family.append(self)
-            Var.set_active(len(Var.family) - 1)
+            self.legality: Variable.VariableLegality = Variable.VariableLegality.VARIBLE_EXPRESSION_ILLEGAL
+            Variable.family.append(self)
+            Variable.set_active(len(Variable.family) - 1)
         else:
             message.put_delayed(display, "Maximum variable limit exceeded")
 
     @property
-    def exp(self):
+    def exp(self) -> str:
         return self._exp
 
     @exp.setter
-    def exp(self, value):
+    def exp(self, value: str) -> None:
         self._exp = value
         self.legal_check()
-        if self.legality != Var.VAR_EXP_LEGAL and self._vname in Var.vars:
-            del Var.vars[self._vname]
-        elif self.legality == Var.VAR_EXP_LEGAL:
-            Var.vars[self._vname] = self._value
+        if self.legality != Variable.VariableLegality.VARIABLE_LEGAL and self._vname in Variable.vars:
+            del Variable.vars[self._vname]
+        elif self.legality == Variable.VariableLegality.VARIABLE_LEGAL:
+            Variable.vars[self._vname] = self._value
 
     @staticmethod
-    def set_active(index):
+    def set_active(index: int | str) -> None:
         if index == "u":
-            if Var._act_index > 0:
-                Var._act_index -= 1
-                Var.active = Var.family[Var._act_index]
+            if Variable._act_index > 0:
+                Variable._act_index -= 1
+                Variable.active = Variable.family[Variable._act_index]
         elif index == "d":
-            if Var._act_index < len(Var.family) - 1:
-                Var._act_index += 1
-                Var.active = Var.family[Var._act_index]
-        elif Var.family:
-            Var.active = Var.family[index]
-            Var._act_index = index
+            if Variable._act_index < len(Variable.family) - 1:
+                Variable._act_index += 1
+                Variable.active = Variable.family[Variable._act_index]
+        elif Variable.family:
+            assert isinstance(index, int)
+            Variable.active = Variable.family[index]
+            Variable._act_index = index
         else:
-            Var.active = None
+            Variable.active = None
 
     @staticmethod
     def remove() -> None:
-        if Var.family:
-            assert Var.active is not None
-            index = Var.family.index(Var.active)
-            Var.family.remove(Var.active)
-            if index == len(Var.family):
-                Var.set_active(index - 1)
+        if Variable.family:
+            assert Variable.active is not None
+            index = Variable.family.index(Variable.active)
+            Variable.family.remove(Variable.active)
+            if index == len(Variable.family):
+                Variable.set_active(index - 1)
             else:
-                Var.set_active(index)
+                Variable.set_active(index)
         else:
             message.put_delayed(display, "No variable to remove")
 
     @staticmethod
     def move_cursor(move: int) -> None:
-        var = Var.active
+        var = Variable.active
         assert var is not None
         if move == -1:
             if var.cursor > 0:
@@ -1115,11 +1118,11 @@ class Var:
                 var.cursor = len(var.exp)
 
     @staticmethod
-    def insert(char):
-        if not Var.active:
+    def insert(char: str) -> None:
+        if not Variable.active:
             message.put_delayed(display, "No variable has been created")
             return
-        var = Var.active
+        var = Variable.active
         if len(var.exp) > 25:
             message.put_delayed(display, "Variable expression too long")
             return
@@ -1136,60 +1139,57 @@ class Var:
 
     @staticmethod
     def delete() -> None:
-        if not Var.active:
+        if not Variable.active:
             message.put_delayed(display, "No variable has been created")
             return
-        var = Var.active
+        var = Variable.active
         if var.cursor != 0:
             var.exp = var.exp[: var.cursor - 1] + var.exp[var.cursor :]
             var.cursor -= 1
 
-    def legal_check(self):
+    def legal_check(self) -> VariableLegality:
         # determine legality of a variable expression
         exp_match = re.match(VAR_EXP, self.exp)
         if not exp_match:
-            self.legality = Var.VAR_EXP_MATCH
+            self.legality = Variable.VariableLegality.VARIBLE_EXPRESSION_ILLEGAL
         else:
             self._vname = exp_match.group("vname")
             self._value = exp_match.group("value")
             if not valid_variable_name(self._vname):
-                self.legality = Var.VAR_EXP_NAME
+                self.legality = Variable.VariableLegality.VARIABLE_NAME_ILLEGAL
             elif not is_int(self._value):
-                self.legality = Var.VAR_EXP_VALUE
+                self.legality = Variable.VariableLegality.VARIABLE_VALUE_ILLEGAL
             else:
-                self.legality = Var.VAR_EXP_LEGAL
+                self.legality = Variable.VariableLegality.VARIABLE_LEGAL
         return self.legality
 
     def show(self) -> None:
-        if Var.active == self:
+        if Variable.active == self:
             message.put(display, "var: " + self.exp[: self.cursor] + "|" + self.exp[self.cursor :])
         else:
             message.put(display, "var: " + self.exp)
-
-        # display variable status
-        if self.legality == Var.VAR_EXP_MATCH:
-            msg = "The variable expression is illegal"
-        elif self.legality == Var.VAR_EXP_NAME:
-            msg = "The name of the variable is illegal"
-        elif self.legality == Var.VAR_EXP_VALUE:
-            msg = "The value of the variable is illegal"
-        elif self.legality == Var.VAR_EXP_LEGAL:
-            msg = "The variable is legal"
-        else:
-            msg = "Unknown message"
+        match self.legality:
+            case Variable.VariableLegality.VARIBLE_EXPRESSION_ILLEGAL:
+                msg = "The variable expression is illegal"
+            case Variable.VariableLegality.VARIABLE_NAME_ILLEGAL:
+                msg = "The name of the variable is illegal"
+            case Variable.VariableLegality.VARIABLE_VALUE_ILLEGAL:
+                msg = "The value of the variable is illegal"
+            case Variable.VariableLegality.VARIABLE_LEGAL:
+                msg = "The variable is legal"
         message.indent()
         message.put(display, msg)
         message.unindent()
 
-    def __del__(self):
-        del Var.vars[self._vname]
+    def __del__(self) -> None:
+        del Variable.vars[self._vname]
 
 
 class Func:
     limit = 8
     family: typing.ClassVar[list[typing.Self]] = []
     active: typing.ClassVar[typing.Optional[typing.Self]] = None
-    _act_index = 0
+    _act_index: typing.ClassVar[int] = 0
     _accuracy = 1
     _stroke_width = 2
 
@@ -1204,7 +1204,7 @@ class Func:
             message.put_delayed(display, "Maximum graph exceeded")
 
     @staticmethod
-    def set_active(index):
+    def set_active(index: typing.Union[int, str]) -> None:
         if index == "u":
             if Func._act_index > 0:
                 Func._act_index -= 1
@@ -1214,6 +1214,7 @@ class Func:
                 Func._act_index += 1
                 Func.active = Func.family[Func._act_index]
         elif Func.family:
+            assert isinstance(index, int)
             Func.active = Func.family[index]
             Func._act_index = index
         else:
@@ -1233,7 +1234,7 @@ class Func:
             message.put_delayed(display, "No graph expression to remove")
 
     @staticmethod
-    def move_cursor(move):
+    def move_cursor(move: int) -> None:
         function = Func.active
         assert function is not None
         if move == -1:
@@ -1250,7 +1251,7 @@ class Func:
                 function.cursor = len(function.exp)
 
     @staticmethod
-    def insert(char):
+    def insert(char: str) -> None:
         if not Func.active:
             message.put_delayed(display, "No expression has been created")
             return
@@ -1279,7 +1280,7 @@ class Func:
             func.exp = func.exp[: func.cursor - 1] + func.exp[func.cursor :]
             func.cursor -= 1
 
-    def true_exp(self):
+    def true_exp(self) -> typing.Union[str, tuple[str, str]]:
         exp_match = re.match(FULL_EXP, self.exp)
         if not exp_match:
             exp = self.exp
@@ -1304,7 +1305,7 @@ class Func:
     def draw(self) -> None:
         true_exp = self.true_exp()
         if self.visible:
-            if type(true_exp) == str:
+            if isinstance(true_exp, str):
                 if "±" not in true_exp:
                     self.graph(true_exp)
                 else:
@@ -1322,7 +1323,7 @@ class Func:
                     self.graph(exp.replace("±", "-"), domain)
                     message.unindent()
 
-    def graph(self, expression: str, domain="True"):
+    def graph(self, expression: str, domain: str="True") -> None:
         self.drawability = 1
 
         # check if the expression is function or relation
@@ -1393,7 +1394,7 @@ def is_int(string: str) -> bool:
 
 
 def valid_variable_name(literal: str) -> bool:
-    if literal in Var.vars:
+    if literal in Variable.vars:
         return True
     elif literal in ["x", "y"]:
         return False
@@ -1424,7 +1425,7 @@ def main() -> None:
         # reset
         message.reset()
         func = Func.active
-        var = Var.active
+        var = Variable.active
         corner = pygame.Rect(display_width - 45, 0, 45, 36)
 
         # pygame event controls
@@ -1483,12 +1484,12 @@ def main() -> None:
                         if tab.visible == FUNC_TAB:
                             Func.remove()
                         if tab.visible == VAR_TAB:
-                            Var.remove()
+                            Variable.remove()
                     elif event.key == K_RETURN:
                         if tab.visible == FUNC_TAB:
                             Func("")
                         elif tab.visible == VAR_TAB:
-                            Var("")
+                            Variable("")
                     elif event.key == K_1:
                         if tab.visible == FUNC_TAB:
                             tab.visible = None
@@ -1566,37 +1567,37 @@ def main() -> None:
                     if modifier_keys & KMOD_SHIFT:
                         for shift in SHIFTS:
                             if event.key == shift[0]:
-                                Var.insert(shift[1])
+                                Variable.insert(shift[1])
                     # alt key alternatives
                     elif modifier_keys & KMOD_ALT:
                         for alt in ALTS:
                             if event.key == alt[0]:
-                                Var.insert(alt[1])
+                                Variable.insert(alt[1])
                     # single key shortcuts
                     elif event.key == K_BACKSPACE:
                         if var:
-                            Var.delete()
+                            Variable.delete()
                     elif event.key == K_LEFT:
-                        Var.move_cursor(-1)
+                        Variable.move_cursor(-1)
                     elif event.key == K_RIGHT:
-                        Var.move_cursor(1)
+                        Variable.move_cursor(1)
                     elif event.key == K_UP:
-                        Var.set_active("u")
+                        Variable.set_active("u")
                     elif event.key == K_DOWN:
-                        Var.set_active("d")
+                        Variable.set_active("d")
                     elif event.key == K_RETURN:
-                        if not Var.active:
+                        if not Variable.active:
                             message.put_delayed(display, "No expression available")
                         else:
                             assert var is not None
                             var.visible = not var.visible
                     elif event.key == K_SPACE:
-                        Var.insert(" ")
+                        Variable.insert(" ")
                     # basic input
                     else:
                         k_name = pygame.key.name(event.key)
                         if not modifier_keys and len(k_name) == 1:
-                            Var.insert(pygame.key.name(event.key))
+                            Variable.insert(pygame.key.name(event.key))
             elif event.type == MOUSEBUTTONDOWN:
                 # if mods & KMOD_SHIFT:
                 if event.button == 4:
@@ -1777,7 +1778,7 @@ def sig_figure(x: fractions.Fraction | float, fig: int) -> float:
         return sgn(x.denominator) * float("inf")
 
 
-@functools.cache
+# @functools.cache
 def evaluate2(x: float, y: float, s: str, origin_x: int, origin_y: int, scale_x: fractions.Fraction, scale_y: fractions.Fraction) -> float:
     x = (x - origin_x) / scale_x
     y = (origin_y - y) / scale_y

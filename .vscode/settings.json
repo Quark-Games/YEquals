@@ -3,6 +3,7 @@
     "python.linting.mypyEnabled": true,
     "python.linting.mypyArgs": [
       "--strict",
+      "--allow-untyped-calls",
       "--ignore-missing-imports"
     ]
 }
