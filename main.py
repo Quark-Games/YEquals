@@ -678,7 +678,7 @@ RELA_TAB = 4
 FPS = 30
 SCALE_DX = 80
 SCALE_DY = 80
-SCALE_RATIO = 1.2
+SCALE_RATIO = fractions.Fraction(12, 10)
 
 SCREENSHOT_PATH = os.path.join(os.path.expanduser("~"), "Desktop", "screenshot.jpg")
 FULL_EXP = r"(?P<exp>.+)\[(?P<domain>.+)\]\s*$"
@@ -702,6 +702,7 @@ class Point:
     x: numpy.float128
     y: numpy.float128
 
+
 @dataclasses.dataclass
 class DisplayPoint:
     """
@@ -715,6 +716,7 @@ class DisplayPoint:
     x: int
     y: int
 
+
 class Message:
     @dataclasses.dataclass
     class DelayedMessage:
@@ -725,7 +727,7 @@ class Message:
     limit = 5
     delayed_messages: list[DelayedMessage] = []
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.reset()
         self.font = pygame.font.Font(None, 21)
         self.label_font = pygame.font.Font(None, 19)
@@ -754,7 +756,7 @@ class Message:
         Message.delayed_messages.append(Message.DelayedMessage(screen, text_string, show_time * FPS))
         # Message.delay_messages.append([screen, text_string, show_time * FPS])
 
-    def show_delayed(self):
+    def show_delayed(self) -> None:
         if len(Message.delayed_messages) >= Message.limit:
             del Message.delayed_messages[:-5]
         if len(Message.delayed_messages) != 0:
@@ -767,34 +769,39 @@ class Message:
                     Message.delayed_messages.remove(message)
             self.unindent()
 
-    def reset(self):
+    def reset(self) -> None:
         self.x = 10
         self.y = 10
         self.line_height = 18
 
-    def indent(self):
+    def indent(self) -> None:
         self.x += 15
 
-    def unindent(self):
+    def unindent(self) -> None:
         self.x -= 15
         pygame.draw.line(display, DARK_GREY, (0, self.y), (Tab.width, self.y))
         self.y += 2
 
 
 class File:
-    def __init__(self, fname):
+    def __init__(self, fname: str) -> None:
         self.fname = fname
 
-    def get(self):
+    def get(self) -> None:
         try:
-            with open(self.fname, "rb") as f:
-                Func.family = pickle.load(f)
-                Var.family = pickle.load(f)
-                coordinates.scale_x = pickle.load(f)
-                coordinates.scale_y = pickle.load(f)
-                coordinates.origin = pickle.load(f)
-                coordinates.axis_show = pickle.load(f)
-                coordinates.grid_show = pickle.load(f)
+            with open(self.fname, "rb") as file:
+                Func.family = pickle.load(file)
+                Var.family = pickle.load(file)
+                # coordinates.scale_x = pickle.load(f)
+                Coordinates.set_scale_x(pickle.load(file))
+                # coordinates.scale_y = pickle.load(f)
+                Coordinates.set_scale_y(pickle.load(file))
+                # coordinates.origin = pickle.load(f)
+                Coordinates.set_origin(pickle.load(file))
+                # coordinates.axis_show = pickle.load(f)
+                Coordinates.set_axis_show(pickle.load(file))
+                # coordinates.grid_show = pickle.load(f)
+                Coordinates.set_grid_show(pickle.load(file))
             if Func.family:
                 Func.active = Func.family[Func._act_index]
             if Var.family:
@@ -806,114 +813,221 @@ class File:
             message.put_delayed(display, "Error occured while loading data")
             logger.error("File %s is not properly loaded", self.fname)
 
-    def put(self):
+    def put(self) -> None:
         try:
-            with open(self.fname, "wb") as f:
-                Tab.visible = True
-                pickle.dump(Func.family, f)
-                pickle.dump(Var.family, f)
-                pickle.dump(coordinates.scale_x, f)
-                pickle.dump(coordinates.scale_y, f)
-                pickle.dump(coordinates.origin, f)
-                pickle.dump(coordinates.axis_show, f)
-                pickle.dump(coordinates.grid_show, f)
+            with open(self.fname, "wb") as file:
+                # Tab.visible = True # ????
+                pickle.dump(Func.family, file)
+                pickle.dump(Var.family, file)
+                # pickle.dump(coordinates.scale_x, f)
+                pickle.dump(Coordinates.get_scale_x(), file)
+                # pickle.dump(coordinates.scale_y, f)
+                pickle.dump(Coordinates.get_scale_y(), file)
+                # pickle.dump(coordinates.origin, f)
+                pickle.dump(Coordinates.get_origin(), file)
+                # pickle.dump(coordinates.axis_show, f)
+                pickle.dump(Coordinates.get_axis_show(), file)
+                # pickle.dump(coordinates.grid_show, f)
+                pickle.dump(Coordinates.get_grid_show(), file)
             logger.info("File %s properly saved", self.fname)
         except Exception as e:
             message.put_delayed(display, "Error occured while saving data")
             logger.error("File %s not properly saved", self.fname)
 
     @staticmethod
-    def screenshot():
+    def screenshot() -> None:
         pygame.image.save(display, SCREENSHOT_PATH)
 
 
+class Tab:
+    width: typing.ClassVar[int] = 300
+
+    def __init__(self) -> None:
+        self._visible = True
+
+    @property
+    def visible(self):
+        return self._visible
+
+    @visible.setter
+    def visible(self, value):
+        temp = self._visible
+        self._visible = value
+        if not tab._visible:
+            # coordinates.move_origin(-Tab.width // 2, 0)
+            Coordinates.move_origin(-Tab.width // 2, 0)
+        elif not temp:
+            # coordinates.move_origin(Tab.width // 2, 0)
+            Coordinates.move_origin(Tab.width // 2, 0)
+
+    def show_tab(self) -> None:
+        if tab.visible:
+            message.y += 40
+        if tab.visible == FUNC_TAB:
+            self.func_tab()
+        elif tab.visible == VAR_TAB:
+            self.var_tab()
+        elif tab.visible == VIEW_TAB:
+            self.view_tab()
+        if tab.visible:
+            display.blit(tab_banner_img, (0, 0))
+
+    def func_tab(self) -> None:
+        pygame.draw.rect(display, LIGHT_BLUE, (0, 0, Tab.width, display_height))
+        for func in Func.family:
+            func.show()
+
+    def var_tab(self) -> None:
+        pygame.draw.rect(display, LIGHT_GREEN, (0, 0, Tab.width, display_height))
+        for var in Var.family:
+            var.show()
+
+    def view_tab(self) -> None:
+        pygame.draw.rect(display, LIGHT_YELLOW, (0, 0, Tab.width, display_height))
+
+    def resize_win(self, width: int, height: int):
+        global display_width, display_height
+        old_size = display.get_rect()
+        old_w, old_h = old_size.right, old_size.bottom
+        if width < 800:
+            width = 800
+            message.put_delayed(display, "minimal window width is 800")
+        if height < 600:
+            height = 600
+            message.put_delayed(display, "minimal window height is 600")
+        display_width, display_height = width, height
+        pygame.display.set_mode((width, height), RESIZABLE)
+        # coordinates.move_origin((w - old_w) // 2, (h - old_h) // 2)
+        Coordinates.move_origin((width - old_w) // 2, (height - old_h) // 2)
+
+
 class Coordinates:
-    _stroke_width = 2
+    _stroke_width: typing.ClassVar[int] = 2
+    _scale_x: typing.ClassVar[fractions.Fraction] = fractions.Fraction(SCALE_DX)
+    _scale_y: typing.ClassVar[fractions.Fraction] = fractions.Fraction(SCALE_DY)
+    __origin: typing.ClassVar[DisplayPoint] = DisplayPoint(display_width // 2 + Tab.width // 2, display_height // 2)
+    _axis_show: typing.ClassVar[bool] = True
+    _grid_show: typing.ClassVar[bool] = True
 
-    def __init__(self):
-        # calculate orign
-        # self.origin = [display_width / 2 + Tab.width / 2, display_height / 2]
-        self.origin: DisplayPoint = DisplayPoint(display_width // 2 + Tab.width // 2, display_height // 2)
-        self._scale_x = SCALE_DX
-        self._scale_y = SCALE_DY
-        self.axis_show = True
-        self.grid_show = True
+    def __init__(self) -> None:
+        raise Exception("This class is not supposed to be instantiated")
 
-    @property
-    def scale_x(self):
-        return self._scale_x
+    @staticmethod
+    def get_scale_x() -> fractions.Fraction:
+        return Coordinates._scale_x
 
-    @scale_x.setter
-    def scale_x(self, value):
-        old_scale_x = self._scale_x
+    @staticmethod
+    def set_scale_x(scale_x: fractions.Fraction) -> None:
+        old_scale_x = Coordinates._scale_x
         mouse_x = pygame.mouse.get_pos()[0]
-        coordinates.move_origin((self.origin.x - mouse_x) / old_scale_x * (value - old_scale_x), 0)
-        self._scale_x = value
+        Coordinates.move_origin((Coordinates.__origin.x - mouse_x) // int(old_scale_x / (scale_x - old_scale_x)), 0)
+        Coordinates._scale_x = scale_x
 
-    @property
-    def scale_y(self):
-        return self._scale_y
+    @staticmethod
+    def get_scale_y() -> fractions.Fraction:
+        return Coordinates._scale_y
 
-    @scale_y.setter
-    def scale_y(self, value):
-        old_scale_y = self._scale_y
+    @staticmethod
+    def set_scale_y(value: fractions.Fraction) -> None:
+        old_scale_y = Coordinates._scale_y
         mouse_y = pygame.mouse.get_pos()[1]
-        coordinates.move_origin(0, (self.origin.y - mouse_y) / old_scale_y * (value - old_scale_y))
-        self._scale_y = value
+        Coordinates.move_origin(0, (Coordinates.__origin.y - mouse_y) // int(old_scale_y / (value - old_scale_y)))
+        Coordinates._scale_y = value
 
-    def move_origin(self, x:int, y:int):
-        self.origin.x += x
-        self.origin.y += y
+    @staticmethod
+    def update_scale_x(value: fractions.Fraction) -> fractions.Fraction:
+        # Updates only x and returns the new value
+        Coordinates._scale_x *= value
+        return Coordinates._scale_x
 
-    def axis(self):
-        if self.axis_show:
-            pygame.draw.line(display, RED, (0, self.origin.y), (display_width, self.origin.y), Coordinates._stroke_width)
-            pygame.draw.line(display, RED, (self.origin.x, 0), (self.origin.x, display_height), Coordinates._stroke_width)
+    @staticmethod
+    def update_scale_y(value: fractions.Fraction) -> fractions.Fraction:
+        # Updates only y and returns the new value
+        Coordinates._scale_y *= value
+        return Coordinates._scale_y
 
-    def grid(self):
-        if not self.grid_show:
+    @staticmethod
+    def update_scale(value: fractions.Fraction) -> tuple[fractions.Fraction, fractions.Fraction]:
+        # Updates both x and y and returns the new value
+        Coordinates._scale_x *= value
+        Coordinates._scale_y *= value
+        return Coordinates._scale_x, Coordinates._scale_y
+
+    @staticmethod
+    def get_origin():
+        return Coordinates.__origin
+
+    @staticmethod
+    def set_origin(value: DisplayPoint) -> None:
+        assert isinstance(value, DisplayPoint)
+        Coordinates.__origin = value
+
+    @staticmethod
+    def get_axis_show():
+        return Coordinates._axis_show
+
+    @staticmethod
+    def set_axis_show(value):
+        Coordinates._axis_show = value
+
+    @staticmethod
+    def toggle_axis_show() -> None:
+        Coordinates._axis_show = not Coordinates._axis_show
+
+    @staticmethod
+    def get_grid_show():
+        return Coordinates._grid_show
+
+    @staticmethod
+    def set_grid_show(value):
+        Coordinates._grid_show = value
+
+    @staticmethod
+    def toggle_grid_show() -> None:
+        Coordinates._grid_show = not Coordinates._grid_show
+
+    @staticmethod
+    def reset_origin(tab_visibility: bool) -> None:
+        Coordinates.__origin.x = display_width // 2 + Tab.width // 2 if tab_visibility else display_width // 2
+        Coordinates.__origin.y = display_height // 2
+
+    @staticmethod
+    def move_origin(x: int, y: int) -> None:
+        Coordinates.__origin.x += x
+        Coordinates.__origin.y += y
+
+    @staticmethod
+    def axis() -> None:
+        if Coordinates._axis_show:
+            pygame.draw.line(display, RED, (0, Coordinates.__origin.y), (display_width, Coordinates.__origin.y), Coordinates._stroke_width)
+            pygame.draw.line(display, RED, (Coordinates.__origin.x, 0), (Coordinates.__origin.x, display_height), Coordinates._stroke_width)
+
+    @staticmethod
+    def grid() -> None:
+        if not Coordinates._grid_show:
             return
 
-        def sig_figure(x, fig):
-            return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
-
         # initiate value
-        ori_x, ori_y = coordinates.origin.x, coordinates.origin.y
-        gap_x, gap_y = SCALE_DX / coordinates.scale_x, SCALE_DY / coordinates.scale_y
-        gap_x = sig_figure(gap_x, 2)
-        gap_y = sig_figure(gap_y, 2)
-        gap_px = int(gap_x * coordinates.scale_x)
-        gap_py = int(gap_y * coordinates.scale_y)
-        label_x, label_y = coordinates.origin.x, coordinates.origin.y
+        # ori_x, ori_y = coordinates.origin.x, coordinates.origin.y
+        gap_x, gap_y = SCALE_DX / Coordinates._scale_x, SCALE_DY / Coordinates._scale_y
+        gap_px = int(gap_x * Coordinates._scale_x)
+        gap_py = int(gap_y * Coordinates._scale_y)
+        label_x, label_y = Coordinates.__origin.x, Coordinates.__origin.y
         left_lim = Tab.width if tab.visible else 0
 
         # draw grid
-        for line_x in range((ori_x - left_lim) % gap_px + left_lim, display_width, gap_px):
-            pygame.draw.line(
-                display,
-                GREY,
-                (line_x, 0),
-                (line_x, display_height),
-                Coordinates._stroke_width,
-            )
-            val = (line_x - ori_x) / coordinates.scale_x
+        for line_x in range((Coordinates.__origin.x - left_lim) % gap_px + left_lim, display_width, gap_px):
+            pygame.draw.line(display, GREY, (line_x, 0), (line_x, display_height), Coordinates._stroke_width)
+            val: fractions.Fraction = (line_x - Coordinates.__origin.x) / Coordinates._scale_x
             if val != 0:
-                val = sig_figure(val, 2)
-                message.label(line_x, label_y, val)
+                message.label(line_x, label_y, str(sig_figure(val, 2)))
             else:
                 message.label(line_x, label_y, str(0))
-        for line_y in range(ori_y % gap_py, display_height, gap_py):
-            pygame.draw.line(
-                display,
-                GREY,
-                (0, line_y),
-                (display_width, line_y),
-                Coordinates._stroke_width,
-            )
-            val = (ori_y - line_y) / coordinates.scale_y
+        for line_y in range(Coordinates.__origin.y % gap_py, display_height, gap_py):
+            pygame.draw.line(display, GREY, (0, line_y), (display_width, line_y), Coordinates._stroke_width)
+            val = (Coordinates.__origin.y - line_y) / Coordinates._scale_y
             if val != 0:
-                val = sig_figure(val, 2)
-                message.label(label_x, line_y, val)
+                message.label(label_x, line_y, str(sig_figure(val, 2)))
 
 
 class Var:
@@ -924,15 +1038,15 @@ class Var:
     VAR_EXP_LEGAL = 3
     limit = 8
     family: typing.ClassVar[list[typing.Self]] = []
-    vars = {}
+    vars: dict[typing.Optional[str], typing.Optional[str]] = {}
     active: typing.ClassVar[typing.Optional[typing.Self]] = None
     _act_index = 0
 
     def __init__(self, expression: str = ""):
         if len(Var.family) < Var.limit:
             self._exp = ""
-            self._vname = None
-            self._value = None
+            self._vname: typing.Optional[str] = None
+            self._value: typing.Optional[str] = None
             self.exp = expression
             self.cursor = len(expression)
             self.visible = True
@@ -971,7 +1085,7 @@ class Var:
             Var.active = None
 
     @staticmethod
-    def remove():
+    def remove() -> None:
         if Var.family:
             assert Var.active is not None
             index = Var.family.index(Var.active)
@@ -984,7 +1098,7 @@ class Var:
             message.put_delayed(display, "No variable to remove")
 
     @staticmethod
-    def move_cursor(move: int):
+    def move_cursor(move: int) -> None:
         var = Var.active
         assert var is not None
         if move == -1:
@@ -1021,7 +1135,7 @@ class Var:
             var.exp = var.exp[0 : var.cursor] + close + var.exp[var.cursor :]
 
     @staticmethod
-    def delete():
+    def delete() -> None:
         if not Var.active:
             message.put_delayed(display, "No variable has been created")
             return
@@ -1038,7 +1152,7 @@ class Var:
         else:
             self._vname = exp_match.group("vname")
             self._value = exp_match.group("value")
-            if not var_name(self._vname):
+            if not valid_variable_name(self._vname):
                 self.legality = Var.VAR_EXP_NAME
             elif not is_int(self._value):
                 self.legality = Var.VAR_EXP_VALUE
@@ -1046,12 +1160,9 @@ class Var:
                 self.legality = Var.VAR_EXP_LEGAL
         return self.legality
 
-    def show(self):
+    def show(self) -> None:
         if Var.active == self:
-            message.put(
-                display,
-                "var: " + self.exp[: self.cursor] + "|" + self.exp[self.cursor :],
-            )
+            message.put(display, "var: " + self.exp[: self.cursor] + "|" + self.exp[self.cursor :])
         else:
             message.put(display, "var: " + self.exp)
 
@@ -1109,7 +1220,7 @@ class Func:
             Func.active = None
 
     @staticmethod
-    def remove():
+    def remove() -> None:
         if Func.family:
             assert Func.active is not None
             index = Func.family.index(Func.active)
@@ -1159,7 +1270,7 @@ class Func:
             func.exp = func.exp[0 : func.cursor] + close + func.exp[func.cursor :]
 
     @staticmethod
-    def delete():
+    def delete() -> None:
         if not Func.active:
             message.put_delayed(display, "No expression has been created")
             return
@@ -1190,7 +1301,7 @@ class Func:
         else:
             return exp, domain
 
-    def draw(self):
+    def draw(self) -> None:
         true_exp = self.true_exp()
         if self.visible:
             if type(true_exp) == str:
@@ -1211,20 +1322,22 @@ class Func:
                     self.graph(exp.replace("±", "-"), domain)
                     message.unindent()
 
-    def graph(self, exp, domain="True"):
+    def graph(self, expression: str, domain="True"):
         self.drawability = 1
 
         # check if the expression is function or relation
-        if len(exp.split("=")) != 2:
+        if len(expression.split("=")) != 2:
             self.drawability = 0
             return
         pairs = None
-        if "y" in exp.split("=")[0:2]:
-            exp = exp.split("=")[1] if "y" == exp.split("=")[0] else exp.split("=")[0]
-            if "y" not in exp:
-                pairs = y_equals(exp, coordinates)
+        if "y" in expression.split("=")[0:2]:
+            expression = expression.split("=")[1] if "y" == expression.split("=")[0] else expression.split("=")[0]
+            if "y" not in expression:
+                # pairs = y_equals(exp, coordinates)
+                pairs = y_equals(expression, Coordinates.get_origin(), Coordinates.get_scale_x(), Coordinates.get_scale_y())
         if not pairs:
-            pairs = xyre(exp, coordinates)
+            # pairs = xyre(exp, coordinates)
+            pairs = xyre(expression, Coordinates.get_origin(), Coordinates.get_scale_x(), Coordinates.get_scale_y())
 
         # check for errors
         if pairs is None:
@@ -1232,14 +1345,15 @@ class Func:
 
         # loop through coordinate pairs
         for pair in pairs:
+            a, b = pair
 
             # draw line
-            pygame.draw.line(display, BLACK, *pair, Func._stroke_width)
+            pygame.draw.line(display, BLACK, a, b, Func._stroke_width)
 
         # return
         return
 
-    def show(self):
+    def show(self) -> None:
         # display expression
         if pygame.key.get_pressed()[K_TAB]:
             message.put(display, "y = " + str(self.true_exp()))
@@ -1263,81 +1377,22 @@ class Func:
         message.unindent()
 
 
-class Tab:
-    width = 300
-
-    def __init__(self):
-        self._visible = True
-
-    @property
-    def visible(self):
-        return self._visible
-
-    @visible.setter
-    def visible(self, value):
-        temp = self._visible
-        self._visible = value
-        if not tab._visible:
-            coordinates.move_origin(-Tab.width // 2, 0)
-        elif not temp:
-            coordinates.move_origin(Tab.width // 2, 0)
-
-    def show_tab(self):
-        if tab.visible:
-            message.y += 40
-        if tab.visible == FUNC_TAB:
-            self.func_tab()
-        elif tab.visible == VAR_TAB:
-            self.var_tab()
-        elif tab.visible == VIEW_TAB:
-            self.view_tab()
-        if tab.visible:
-            display.blit(tab_banner_img, (0, 0))
-
-    def func_tab(self):
-        pygame.draw.rect(display, LIGHT_BLUE, (0, 0, Tab.width, display_height))
-        for func in Func.family:
-            func.show()
-
-    def var_tab(self):
-        pygame.draw.rect(display, LIGHT_GREEN, (0, 0, Tab.width, display_height))
-        for var in Var.family:
-            var.show()
-
-    def view_tab(self):
-        pygame.draw.rect(display, LIGHT_YELLOW, (0, 0, Tab.width, display_height))
-
-    def resize_win(self, w, h):
-        global display_width, display_height
-        old_size = display.get_rect()
-        old_w, old_h = old_size.right, old_size.bottom
-        if w < 800:
-            w = 800
-            message.put_delayed(display, "minimal window width is 800")
-        if h < 600:
-            h = 600
-            message.put_delayed(display, "minimal window height is 600")
-        display_width, display_height = w, h
-        pygame.display.set_mode((w, h), RESIZABLE)
-        coordinates.move_origin((w - old_w) / 2, (h - old_h) / 2)
-
-
 data = File(os.path.join(ASSETS, "data.p"))
 message = Message()
-coordinates = Coordinates()
+# coordinates = Coordinates()
 tab = Tab()
 
 
-def is_int(literal):
+def is_int(string: str) -> bool:
     try:
-        int(eval(literal))
+        int(eval(string))
     except Exception as e:
         return False
     else:
         return True
 
 
-def var_name(literal):
+def valid_variable_name(literal: str) -> bool:
     if literal in Var.vars:
         return True
     elif literal in ["x", "y"]:
@@ -1352,7 +1407,12 @@ def var_name(literal):
         return True
 
 
-def main():
+# Why would you do this
+with open(os.path.join(ASSETS, "shortcuts.txt"), "r") as f:
+    shortcuts = [line.replace("\n", "") for line in f.readlines()]
+
+
+def main() -> None:
     global display_width, display_height, shortcuts
 
     data.get()
@@ -1380,11 +1440,13 @@ def main():
                 # cmd / ctrl + shift
                 if (modifier_keys & KMOD_META and modifier_keys & KMOD_SHIFT) or (modifier_keys & KMOD_CTRL and modifier_keys & KMOD_SHIFT):
                     if event.key == K_MINUS:
-                        coordinates.scale_x /= SCALE_RATIO
-                        coordinates.scale_y /= SCALE_RATIO
+                        # coordinates.scale_x /= SCALE_RATIO
+                        # coordinates.scale_y /= SCALE_RATIO
+                        Coordinates.update_scale(1 / SCALE_RATIO)
                     elif event.key == K_EQUALS:
-                        coordinates.scale_x *= SCALE_RATIO
-                        coordinates.scale_y *= SCALE_RATIO
+                        # coordinates.scale_x *= SCALE_RATIO
+                        # coordinates.scale_y *= SCALE_RATIO
+                        Coordinates.update_scale(SCALE_RATIO)
                     elif event.key == K_c:
                         File.screenshot()
 
@@ -1395,34 +1457,28 @@ def main():
                     elif event.key == K_m:
                         pygame.display.iconify()
                     elif event.key == K_MINUS:
-                        coordinates.scale_x /= 2
-                        coordinates.scale_y /= 2
+                        # coordinates.scale_x /= 2
+                        # coordinates.scale_y /= 2
+                        Coordinates.update_scale(fractions.Fraction(1, 2))
                     elif event.key == K_EQUALS:
-                        coordinates.scale_x *= 2
-                        coordinates.scale_y *= 2
+                        # coordinates.scale_x *= 2
+                        # coordinates.scale_y *= 2
+                        Coordinates.update_scale(fractions.Fraction(2))
                     elif event.key == K_0:
-                        coordinates.scale_x, coordinates.scale_y = SCALE_DX, SCALE_DY
-                        if tab.visible:
-                            coordinates.origin = [
-                                display_width / 2 + Tab.width / 2,
-                                display_height / 2,
-                            ]
-                        else:
-                            coordinates.origin = [
-                                display_width / 2,
-                                display_height / 2,
-                            ]
+                        # coordinates.scale_x, coordinates.scale_y = SCALE_DX, SCALE_DY
+                        Coordinates.set_scale_x(fractions.Fraction(SCALE_DX))
+                        Coordinates.set_scale_y(fractions.Fraction(SCALE_DY))
+                        # coordinates.reset_origin(bool(tab.visible))
+                        Coordinates.reset_origin(bool(tab.visible))
                     elif event.key == K_9:
-                        ave = (coordinates.scale_x + coordinates.scale_y) / 2
-                        coordinates.scale_x, coordinates.scale_y = ave, ave
+                        # ave = (coordinates.scale_x + coordinates.scale_y) / 2
+                        # coordinates.scale_x, coordinates.scale_y = ave, ave
+                        average = (Coordinates.get_scale_x() + Coordinates.get_scale_y()) / 2
+                        Coordinates.set_scale_x(average)
+                        Coordinates.set_scale_y(average)
                     elif event.key == K_8:
-                        if tab.visible:
-                            coordinates.origin = [
-                                display_width / 2 + Tab.width / 2,
-                                display_height / 2,
-                            ]
-                        else:
-                            coordinates.origin = [display_width / 2, display_height / 2]
+                        # coordinates.reset_origin(bool(tab.visible))
+                        Coordinates.reset_origin(bool(tab.visible))
                     elif event.key == K_BACKSPACE:
                         if tab.visible == FUNC_TAB:
                             Func.remove()
@@ -1449,9 +1505,11 @@ def main():
                         else:
                             tab.visible = VIEW_TAB
                     elif event.key == K_a:
-                        coordinates.axis_show = not coordinates.axis_show
+                        # coordinates.axis_show = not coordinates.axis_show
+                        Coordinates.toggle_axis_show()
                     elif event.key == K_g:
-                        coordinates.grid_show = not coordinates.grid_show
+                        # coordinates.grid_show = not coordinates.grid_show
+                        Coordinates.toggle_grid_show()
                     elif event.key == K_c:
                         if tab.visible == FUNC_TAB:
                             assert func is not None
@@ -1542,11 +1600,13 @@ def main():
             elif event.type == MOUSEBUTTONDOWN:
                 # if mods & KMOD_SHIFT:
                 if event.button == 4:
-                    coordinates.scale_x //= SCALE_RATIO
-                    coordinates.scale_y //= SCALE_RATIO
+                    # coordinates.scale_x //= SCALE_RATIO
+                    # coordinates.scale_y //= SCALE_RATIO
+                    Coordinates.update_scale(1 / SCALE_RATIO)
                 elif event.button == 5:
-                    coordinates.scale_x *= SCALE_RATIO
-                    coordinates.scale_y *= SCALE_RATIO
+                    # coordinates.scale_x *= SCALE_RATIO
+                    # coordinates.scale_y *= SCALE_RATIO
+                    Coordinates.update_scale(SCALE_RATIO)
             elif event.type == VIDEORESIZE:
                 tab.resize_win(event.w, event.h)
 
@@ -1555,14 +1615,18 @@ def main():
         mouse_press = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
         if (modifier_keys & KMOD_META) or (modifier_keys & KMOD_CTRL):
-            coordinates.move_origin(*pygame.mouse.get_rel())
+            # coordinates.move_origin(*pygame.mouse.get_rel())
+            Coordinates.move_origin(*pygame.mouse.get_rel())
         elif mouse_press[0]:
-            coordinates.move_origin(*pygame.mouse.get_rel())
+            # coordinates.move_origin(*pygame.mouse.get_rel())
+            Coordinates.move_origin(*pygame.mouse.get_rel())
         elif mouse_press[2]:
             mouse_move = pygame.mouse.get_rel()
             minimal = min(display_width, display_height)
-            coordinates.scale_x *= 1 + mouse_move[0] / -minimal
-            coordinates.scale_y *= 1 + mouse_move[1] / minimal
+            # coordinates.scale_x *= 1 + mouse_move[0] / -minimal
+            # coordinates.scale_y *= 1 + mouse_move[1] / minimal
+            Coordinates.update_scale(1 + fractions.Fraction(mouse_move[0], -minimal))
+            Coordinates.update_scale(1 + fractions.Fraction(mouse_move[1], minimal))
         else:
             if corner.collidepoint(mouse_pos):
                 show_shortcuts()
@@ -1573,8 +1637,8 @@ def main():
         # display
         display.fill(WHITE)
 
-        coordinates.grid()
-        coordinates.axis()
+        Coordinates.grid()
+        Coordinates.axis()
 
         for func in Func.family:
             func.draw()
@@ -1594,7 +1658,7 @@ def main():
         clock.tick(FPS)
 
 
-def show_shortcuts():
+def show_shortcuts() -> None:
     global display_width, display_height
 
     show = True
@@ -1625,7 +1689,7 @@ def show_shortcuts():
 
         display.fill(WHITE)
         message.reset()
-        line_num = (display_height - 10) / message.line_height - 1
+        line_num = (display_height - 10) // message.line_height - 1
         logger.debug("line_num -> {}".format(line_num))
         end = int(start + line_num)
         logger.debug("end -> {}".format(end))
@@ -1640,7 +1704,7 @@ def show_shortcuts():
     message.reset()
 
 
-def error(e_name):
+def error(e_name: typing.Any) -> None:
     # This isn't used anywhere?
     raise Exception("Error function called")
     # logger.error(e.__class__.__name__, exc_info=True)
@@ -1689,32 +1753,38 @@ def sgn(num: float) -> float:
     return 0
 
 
-def seval(string: str, **kwargs) -> float:
+def seval(string: str, **kwargs: typing.Any) -> float:
     """
     given a function string, return the value
     """
 
     # extend kwargs with math functions
     kwargs.update(math.__dict__)
+    # kwargs: dict[str, typing.Any] = kwargs
 
     # extend kwargs with sgn and sgn0 functions
-    kwargs.update(sgn=sgn, sgn0=sgn0)
+    kwargs.update({"sgn": sgn, "sgn0": sgn0})
 
     return float(eval(string, kwargs))
 
 
-def sig_figure(x: float, fig: int) -> float:
-    return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
+def sig_figure(x: fractions.Fraction | float, fig: int) -> float:
+    if isinstance(x, float):
+        return round(x, fig - int(math.floor(math.log10(abs(x)))) - 1)
+    try:
+        return round(float(x), fig - int(math.floor(math.log10(abs(x)))) - 1)
+    except OverflowError:
+        return sgn(x.denominator) * float("inf")
 
 
 @functools.cache
-def evaluate2(x, y, s, ori_x, ori_y, scalex, scaley):
-    x = (x - ori_x) / scalex
-    y = (ori_y - y) / scaley
+def evaluate2(x: float, y: float, s: str, origin_x: int, origin_y: int, scale_x: fractions.Fraction, scale_y: fractions.Fraction) -> float:
+    x = (x - origin_x) / scale_x
+    y = (origin_y - y) / scale_y
     return seval(s, x=x, y=y)
 
 
-def y_equals(string: str, coordinates) -> tuple[tuple[tuple[int, int], tuple[int, int]], ...]:
+def y_equals(string: str, origin: DisplayPoint, scale_x: fractions.Fraction, scale_y: fractions.Fraction) -> tuple[tuple[tuple[int, int], tuple[int, int]], ...]:
     """
     given a function string, return a tuple of line coordinate pairs
     """
@@ -1723,32 +1793,32 @@ def y_equals(string: str, coordinates) -> tuple[tuple[tuple[int, int], tuple[int
     old_coordinates = None
 
     # create output list
-    output = []
+    output: list[tuple[tuple[int, int], tuple[int, int]]] = []
 
     # loop through x values from x_min to x_max with DISPLAY_WIDTH increments
     for x_disp in range(DISPLAY_WIDTH):
         try:
 
             # calculate x value
-            x = (x_disp - coordinates.origin[0]) / coordinates.scalex
+            x = (x_disp - origin.x) / scale_x
 
             # calculate y value
             y = seval(string, x=x)
 
             # convert y value to display coordinates
-            y_raw = coordinates.origin[1] - y * coordinates.scaley
+            y_raw = origin.y - y * scale_y
 
             # if this is the first coordinate pair
             if old_coordinates is None:
 
                 # set old coordinate pair
-                old_coordinates = (x_disp, y_raw)
+                old_coordinates = (int(x_disp), int(y_raw))
 
             # if this is not the first coordinate pair
             else:
 
                 # create new coordinate pair
-                new_coord = (x_disp, y_raw)
+                new_coord = (int(x_disp), int(y_raw))
 
                 # add old and new coordinate pair to output list
                 output.append((old_coordinates, new_coord))
@@ -1766,7 +1836,7 @@ def y_equals(string: str, coordinates) -> tuple[tuple[tuple[int, int], tuple[int
     return tuple(output)
 
 
-def xyre(string: str, coor: Coordinates) -> typing.Optional[tuple[tuple[tuple[int, int], tuple[int, int]], ...]]:
+def xyre(string: str, origin: DisplayPoint, scale_x: fractions.Fraction, scale_y: fractions.Fraction) -> typing.Optional[tuple[tuple[tuple[int, int], tuple[int, int]], ...]]:
     """
     Given a string, return a tuple of line coordinate pairs
     """
@@ -1776,13 +1846,13 @@ def xyre(string: str, coor: Coordinates) -> typing.Optional[tuple[tuple[tuple[in
 
     # draw graph of the relation
     # initiate value
-    ori_x, ori_y = map(int, coor.origin)
-    gap_x, gap_y = SCALE_DX / coor.scale_x, SCALE_DY / coor.scale_y
+    ori_x, ori_y = origin.x, origin.y
+    gap_x, gap_y = SCALE_DX / scale_x, SCALE_DY / scale_y
     # print(coor.origin)
-    gap_x = sig_figure(gap_x, 2)
-    gap_y = sig_figure(gap_y, 2)
-    gap_px = int(gap_x * coor.scale_x) // 5
-    gap_py = int(gap_y * coor.scale_y) // 5
+    # gap_x = sig_figure(gap_x, 2)
+    # gap_y = sig_figure(gap_y, 2)
+    gap_px = int(gap_x * scale_x) // 5
+    gap_py = int(gap_y * scale_y) // 5
     # left_lim = Tab.width if tab.visible else 0
     left_lim = 0
 
@@ -1790,57 +1860,32 @@ def xyre(string: str, coor: Coordinates) -> typing.Optional[tuple[tuple[tuple[in
     try:
         # sanity check
         r = tuple(string.split("="))
-        evaluate2(0, 0, r[0], ori_x, ori_y, coor.scale_x, coor.scale_y)
-        evaluate2(0, 0, r[1], ori_x, ori_y, coor.scale_x, coor.scale_y)
+        evaluate2(0, 0, r[0], ori_x, ori_y, scale_x, scale_y)
+        evaluate2(0, 0, r[1], ori_x, ori_y, scale_x, scale_y)
 
         # compute matrix
         matrix: list[list[float]] = []
         for x in range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH, gap_px):
             matrix.append([])
             for y in range(ori_y % gap_py, DISPLAY_HEIGHT, gap_py):
-                matrix[-1].append(evaluate2(x, y, r[0], ori_x, ori_y, coor.scale_x, coor.scale_y) - evaluate2(x, y, r[1], ori_x, ori_y, coor.scale_x, coor.scale_y))
+                matrix[-1].append(evaluate2(x, y, r[0], ori_x, ori_y, scale_x, scale_y) - evaluate2(x, y, r[1], ori_x, ori_y, scale_x, scale_y))
         # compute line segments
         line_segments: list[tuple[tuple[int, int], tuple[int, int]]] = []
         for mx, x in enumerate(range((ori_x - left_lim) % gap_px + left_lim, DISPLAY_WIDTH - gap_px, gap_px)):
             for my, y in enumerate(range(ori_y % gap_py, DISPLAY_HEIGHT - gap_py, gap_py)):
                 line_segment = []
                 if sgn0(matrix[mx][my]) != sgn0(matrix[mx + 1][my]):
-                    line_segment.append(
-                        (
-                            int(x + gap_px * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx + 1][my]))),
-                            y,
-                        )
-                    )
+                    line_segment.append((int(x + gap_px * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx + 1][my]))), y))
                 if sgn0(matrix[mx][my]) != sgn0(matrix[mx][my + 1]):
-                    line_segment.append(
-                        (
-                            x,
-                            int(y + gap_py * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx][my + 1]))),
-                        )
-                    )
+                    line_segment.append((x, int(y + gap_py * abs(matrix[mx][my]) / (abs(matrix[mx][my]) + abs(matrix[mx][my + 1])))))
                 if sgn0(matrix[mx + 1][my]) != sgn0(matrix[mx + 1][my + 1]):
-                    line_segment.append(
-                        (
-                            x + gap_px,
-                            int(y + gap_py * abs(matrix[mx + 1][my]) / (abs(matrix[mx + 1][my]) + abs(matrix[mx + 1][my + 1]))),
-                        )
-                    )
+                    line_segment.append((x + gap_px, int(y + gap_py * abs(matrix[mx + 1][my]) / (abs(matrix[mx + 1][my]) + abs(matrix[mx + 1][my + 1])))))
                 if sgn0(matrix[mx][my + 1]) != sgn0(matrix[mx + 1][my + 1]):
-                    line_segment.append(
-                        (
-                            int(x + gap_px * abs(matrix[mx][my + 1]) / (abs(matrix[mx][my + 1]) + abs(matrix[mx + 1][my + 1]))),
-                            y + gap_py,
-                        )
-                    )
+                    line_segment.append((int(x + gap_px * abs(matrix[mx][my + 1]) / (abs(matrix[mx][my + 1]) + abs(matrix[mx + 1][my + 1]))), y + gap_py))
 
                 # if there are 2 points to draw
                 if len(line_segment) == 2:
-                    line_segments.append(
-                        (
-                            (int(line_segment[0][0]), int(line_segment[0][1])),
-                            (int(line_segment[1][0]), int(line_segment[1][1])),
-                        )
-                    )
+                    line_segments.append(((int(line_segment[0][0]), int(line_segment[0][1])), (int(line_segment[1][0]), int(line_segment[1][1]))))
                 # TODO: add support for 4 points
 
         return tuple(line_segments)
@@ -1848,7 +1893,7 @@ def xyre(string: str, coor: Coordinates) -> typing.Optional[tuple[tuple[tuple[in
         return None
 
 
-def quit_all(save=True):
+def quit_all(save: bool = True) -> None:
     if save:
         data.put()
     logger.debug("Quit all called by user")
