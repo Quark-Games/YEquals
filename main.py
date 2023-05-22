@@ -1016,16 +1016,19 @@ class Coordinates:
         # draw grid
         for line_x in range((Coordinates._origin.x - left_lim) % gap_px + left_lim, display_width, gap_px):
             pygame.draw.line(display, GREY, (line_x, 0), (line_x, display_height), Coordinates._stroke_width)
-            val: fractions.Fraction = (line_x - Coordinates._origin.x) / Coordinates._scale_x
-            if val != 0:
-                message.label(line_x, label_y, str(sig_figure(val, 2)))
-            else:
-                message.label(line_x, label_y, str(0))
+            value = numpy.float128((line_x - Coordinates._origin.x) / Coordinates._scale_x)
+            message.label(line_x, label_y, lable_number(value))
+            # val: fractions.Fraction = (line_x - Coordinates._origin.x) / Coordinates._scale_x
+            # if val != 0:
+            #     message.label(line_x, label_y, str(sig_figure(val, 2)))
+            # else:
+            #     message.label(line_x, label_y, str(0))
         for line_y in range(Coordinates._origin.y % gap_py, display_height, gap_py):
             pygame.draw.line(display, GREY, (0, line_y), (display_width, line_y), Coordinates._stroke_width)
-            val = (Coordinates._origin.y - line_y) / Coordinates._scale_y
+            val = numpy.float128((Coordinates._origin.y - line_y) / Coordinates._scale_y)
             if val != 0:
-                message.label(label_x, line_y, str(sig_figure(val, 2)))
+                message.label(label_x, line_y, lable_number(val))
+                # message.label(label_x, line_y, str(sig_figure(val, 2)))
 
 
 class Variable:
@@ -1753,6 +1756,14 @@ def sig_figure(x: fractions.Fraction | numpy.float128, fig: int) -> numpy.float1
     except OverflowError:
         return sgn(numpy.float128(x.denominator)) * float("inf")
 
+def lable_number(x: numpy.float128) -> str:
+    """
+    returns a string of a number in scientific notation with a maximum length of 10
+    """
+    if len(str(x)) <= 10:
+        return str(x)
+    else:
+        return "{:.1e}".format(x)
 
 # @functools.cache
 def evaluate2(x: float, y: float, s: str, origin_x: int, origin_y: int, scale_x: fractions.Fraction, scale_y: fractions.Fraction) -> numpy.float128:
@@ -1879,4 +1890,8 @@ def quit_all(save: bool = True) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        print(traceback.format_exc().replace(os.getcwd(), ""))
+        print("Consider deleting assets/data.p")
