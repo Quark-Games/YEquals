@@ -719,6 +719,10 @@ def main():
                 quit_all()
             mods = pygame.key.get_mods()
 
+            # quick hack that will definitely not backfire later
+            if mods & pygame.KMOD_NUM:
+                mods ^= pygame.KMOD_NUM
+
             # if key press
             if event.type == KEYDOWN:
 
