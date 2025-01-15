@@ -141,12 +141,12 @@ class Message:
 
 class File:
 
-    def __init__(self, fname):
-        self.fname = fname
+    def __init__(self, file_name):
+        self.file_name = file_name
 
     def get(self):
         try:
-            with open(self.fname, 'rb') as f:
+            with open(self.file_name, 'rb') as f:
                 Func.family = pickle.load(f)
                 Var.family = pickle.load(f)
                 coor.scalex = pickle.load(f)
@@ -160,14 +160,14 @@ class File:
                 for var in Var.family:
                     var.exp = var.exp
                 Var.active = Var.family[Var._act_index]
-            logger.info("File %s is properly loaded", self.fname)
+            logger.info("File %s is properly loaded", self.file_name)
         except Exception as e:
             message.put_delayed(display, "Error occured while loading data")
-            logger.error("File %s is not properly loaded", self.fname)
+            logger.error("File %s is not properly loaded", self.file_name)
 
     def put(self):
         try:
-            with open(self.fname, 'wb') as f:
+            with open(self.file_name, 'wb') as f:
                 Tab.visible = True
                 pickle.dump(Func.family, f)
                 pickle.dump(Var.family, f)
@@ -176,10 +176,10 @@ class File:
                 pickle.dump(coor.origin, f)
                 pickle.dump(coor.axis_show, f)
                 pickle.dump(coor.grid_show, f)
-            logger.info("File %s properly saved", self.fname)
+            logger.info("File %s properly saved", self.file_name)
         except Exception as e:
             message.put_delayed(display, "Error occured while saving data")
-            logger.error("File %s not properly saved", self.fname)
+            logger.error("File %s not properly saved", self.file_name)
 
     def screenshot():
         pygame.image.save(display, SS_PATH)
